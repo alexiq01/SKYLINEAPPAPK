@@ -1,0 +1,6 @@
+{
+  "name": "اشتراكاتي",
+  "description": "تطبيق اشتراكاتي لمشتركي Skyline Internet لإدارة الاشتراكات والرصيد وتاريخ الانتهاء والإشعارات",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
