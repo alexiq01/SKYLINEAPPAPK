@@ -20,9 +20,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -50,8 +57,8 @@ import com.example.ui.theme.SkylineError
 import com.example.ui.theme.SkylineOffline
 import com.example.ui.theme.SkylineOnline
 import com.example.ui.theme.SkylineSuccess
-
 import com.example.ui.theme.isAppInDarkTheme
+import com.example.ui.util.HapticFeedbackHelper
 
 @Composable
 fun SkylineBrandHeader(
@@ -138,6 +145,138 @@ fun OnlineStatusChip(
             fontWeight = FontWeight.Medium,
             color = contentColor
         )
+    }
+}
+
+/**
+ * Online/Offline status indicator displayed at the top of the card.
+ * Informs the user of the real-time internet/server connection status
+ * and whether subscription details are up-to-date or loaded from cache.
+ */
+@Composable
+fun CardOnlineStatusIndicator(
+    isOnline: Boolean,
+    isRefreshing: Boolean = false,
+    lastUpdatedFormatted: String = "",
+    onRefresh: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val isDark = isAppInDarkTheme()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    val bgColor = if (isOnline) {
+        if (isDark) Color(0xFF072718) else Color(0xFFE8F9EE)
+    } else {
+        if (isDark) Color(0xFF33200B) else Color(0xFFFFFBEB)
+    }
+
+    val borderColor = if (isOnline) {
+        if (isDark) Color(0xFF10B981).copy(alpha = 0.35f) else Color(0xFF10B981).copy(alpha = 0.35f)
+    } else {
+        if (isDark) Color(0xFFF59E0B).copy(alpha = 0.35f) else Color(0xFFF59E0B).copy(alpha = 0.4f)
+    }
+
+    val contentColor = if (isOnline) {
+        if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+    } else {
+        if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
+    }
+
+    val statusDotColor = if (isOnline) SkylineOnline else Color(0xFFF59E0B)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .testTag("card_online_status_indicator"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(contentColor.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isOnline) Icons.Default.Wifi else Icons.Default.WifiOff,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(9.dp))
+
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(statusDotColor)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isOnline) "متصل (Online)" else "غير متصل (Offline)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = if (isOnline) "• البيانات محدثة" else "• بيانات محفوظة محلياً",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = contentColor.copy(alpha = 0.9f)
+                    )
+                }
+
+                if (!isOnline && lastUpdatedFormatted.isNotBlank()) {
+                    Text(
+                        text = "آخر تحديث متوفر: $lastUpdatedFormatted",
+                        fontSize = 10.sp,
+                        color = contentColor.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        }
+
+        if (onRefresh != null) {
+            IconButton(
+                onClick = {
+                    HapticFeedbackHelper.performClick(context, haptic)
+                    onRefresh()
+                },
+                modifier = Modifier
+                    .size(28.dp)
+                    .testTag("btn_refresh_card_status")
+            ) {
+                if (isRefreshing) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        color = contentColor,
+                        modifier = Modifier.size(15.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "تحديث البيانات الآن",
+                        tint = contentColor,
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+            }
+        }
     }
 }
 

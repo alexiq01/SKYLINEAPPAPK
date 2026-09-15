@@ -30,12 +30,16 @@ import com.example.ui.login.LoginScreen
 import com.example.ui.login.LoginViewModel
 import com.example.ui.splash.SplashScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.worker.NotificationScheduler
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         com.example.ui.theme.ThemeController.init(this)
         enableEdgeToEdge()
+
+        // Schedule periodic WorkManager task to monitor subscription expiration dates
+        NotificationScheduler.schedulePeriodicSubscriptionCheck(applicationContext)
 
         setContent {
             MyApplicationTheme {

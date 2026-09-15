@@ -57,11 +57,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineSuccess
@@ -80,6 +82,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import com.example.ui.theme.ThemeController
 import com.example.ui.theme.isAppInDarkTheme
+import com.example.ui.util.HapticFeedbackHelper
 
 const val DEVELOPER_INSTAGRAM_URL = "https://www.instagram.com/y_as.01"
 const val DEVELOPER_WHATSAPP_NUMBER = "+9647830528876"
@@ -106,7 +109,7 @@ fun DeveloperSupportCard(
         val clip = ClipData.newPlainText("SUPER QI", DEVELOPER_SUPER_QI_NUMBER)
         clipboard?.setPrimaryClip(clip)
 
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticFeedbackHelper.performCopySuccess(context, haptic)
         isNumberCopied = true
         onCopied("تم نسخ رقم سوبر كي (4659615480) بنجاح")
 
@@ -117,6 +120,7 @@ fun DeveloperSupportCard(
     }
 
     fun openUrl(url: String) {
+        HapticFeedbackHelper.performClick(context, haptic)
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -202,9 +206,9 @@ fun DeveloperSupportCard(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        painter = painterResource(R.drawable.ic_instagram),
+                        contentDescription = "إنستغرام",
+                        modifier = Modifier.size(18.dp),
                         tint = if (isDark) Color(0xFFFF7FB2) else Color(0xFFC13584)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -231,9 +235,9 @@ fun DeveloperSupportCard(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Phone,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        painter = painterResource(R.drawable.ic_whatsapp),
+                        contentDescription = "واتساب",
+                        modifier = Modifier.size(18.dp),
                         tint = if (isDark) Color(0xFF4ADE80) else Color(0xFF128C7E)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -390,11 +394,12 @@ fun DeveloperScreen(
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
         val clip = ClipData.newPlainText(label, text)
         clipboard?.setPrimaryClip(clip)
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticFeedbackHelper.performCopySuccess(context, haptic)
         onCopied("تم نسخ $label بنجاح")
     }
 
     fun openUrl(url: String) {
+        HapticFeedbackHelper.performClick(context, haptic)
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -585,10 +590,10 @@ fun DeveloperScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = null,
+                                    painter = painterResource(R.drawable.ic_instagram),
+                                    contentDescription = "إنستغرام",
                                     tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
@@ -662,10 +667,10 @@ fun DeveloperScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Phone,
-                                    contentDescription = null,
+                                    painter = painterResource(R.drawable.ic_whatsapp),
+                                    contentDescription = "واتساب",
                                     tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
@@ -705,8 +710,9 @@ fun DeveloperScreen(
                                 modifier = Modifier.height(36.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Chat,
+                                    painter = painterResource(R.drawable.ic_whatsapp),
                                     contentDescription = null,
+                                    tint = Color.White,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))

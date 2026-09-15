@@ -105,6 +105,7 @@ class SkylineRepository(
             // Schedule WorkManager notifications for subscription expiration
             service?.expiration?.let { exp ->
                 NotificationScheduler.scheduleSubscriptionAlerts(context, exp)
+                NotificationScheduler.schedulePeriodicSubscriptionCheck(context)
             }
 
             Result.success(unified)

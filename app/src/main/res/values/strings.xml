@@ -68,7 +68,15 @@
     <string name="nav_more">المزيد</string>
     <string name="notification_channel_name">تنبيهات انتهاء الاشتراك</string>
     <string name="notification_channel_desc">إشعارات تذكيرية قبل انتهاء اشتراك Skyline</string>
+    <string name="notification_expiring_3d">تنبيه: سينتهي اشتراكك في خدمة الإنترنت خلال 3 أيام! يرجى الاستعداد للتجديد.</string>
     <string name="notification_expiring_24h">تنبيه: سينتهي اشتراكك في خدمة الإنترنت خلال 24 ساعة!</string>
     <string name="notification_expiring_1h">تنبيه عاجل: سينتهي اشتراكك في خدمة الإنترنت خلال ساعة واحدة!</string>
     <string name="notification_expired">انتهى اشتراكك في خدمة الإنترنت، يرجى التجديد للاستمرار.</string>
+    <string name="notification_test_sent">تم إرسال إشعار تجريبي بنجاح!</string>
+    <string name="notification_low_balance_title">تنبيه انخفاض الرصيد</string>
+    <string name="notification_low_balance_msg">تنبيه: رصيد حسابك الحالي (%1$s د.ع) أقل من الحد المحدد (%2$s د.ع). يُرجى شحن الرصيد لتجنب انقطاع الخدمة.</string>
+    <string name="low_balance_reminder_title">تنبيهات انخفاض الرصيد اليومية</string>
+    <string name="low_balance_reminder_desc">إرسال إشعار يومي تلقائي لتذكيرك عندما ينخفض رصيد حسابك عن الحد المحدد</string>
+    <string name="low_balance_threshold">حد الرصيد الأدنى للتنبيه</string>
+    <string name="test_low_balance_notification">تجربة تنبيه انخفاض الرصيد</string>
 </resources>
