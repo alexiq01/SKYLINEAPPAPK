@@ -174,7 +174,7 @@ fun DeveloperSupportCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "دعم للاستمرار في تطوير وتحديث التطبيق",
+                        text = "المطور: ياسين طه Yassin Taha (Software Engineer)",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -451,10 +451,11 @@ fun DeveloperScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "ياسين حامد (Yassin Hamed)",
-                    fontSize = 20.sp,
+                    text = "ياسين طه Yassin Taha (Software Engineer)",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -465,7 +466,7 @@ fun DeveloperScreen(
                     modifier = Modifier.padding(vertical = 4.dp)
                 ) {
                     Text(
-                        text = "مطور تطبيقات أندرويد • Android Software Engineer",
+                        text = "Software Engineer • مهندس برمجيات",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = SkylineBlue,
@@ -476,7 +477,7 @@ fun DeveloperScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "تطوير وصيانة تطبيق Skyline Internet بحلول ذكية وسريعة.",
+                    text = "تطوير وهندسة برمجيات تطبيق Skyline Internet بحلول ذكية وسريعة.",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center

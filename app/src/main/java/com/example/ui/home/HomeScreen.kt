@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Code
@@ -110,9 +113,14 @@ import com.example.ui.components.CircularDaysGauge
 import com.example.ui.components.DeveloperInfoDialog
 import com.example.ui.components.DeveloperScreen
 import com.example.ui.components.DeveloperSupportCard
+import android.content.Intent
+import android.net.Uri
+import com.example.ui.components.DEVELOPER_WHATSAPP_NUMBER
+import com.example.ui.components.DEVELOPER_WHATSAPP_URL
 import com.example.ui.components.InfoRow
 import com.example.ui.components.OnlineStatusChip
 import com.example.ui.components.StatusBadge
+import com.example.ui.subscription.SubscriptionDetailsScreen
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineOnline
@@ -137,7 +145,7 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // 0 = الرئيسية (Home), 1 = الخدمات (Subscription Details), 2 = الإشعارات, 3 = المزيد (Customer Details), 4 = المطور
+    // 0 = الرئيسية (Home), 1 = تفاصيل الاشتراك (Subscription Details), 2 = الإشعارات (Notifications), 3 = المطور (Developer)
     var selectedTab by remember { mutableIntStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showRenewDialog by remember { mutableStateOf(false) }
@@ -176,10 +184,13 @@ fun HomeScreen(
     val isSubscriptionActive = service?.subscriptionStatus?.isActive ?: NotificationScheduler.isSubscriptionActive(service?.expiration)
     val isDataOnline = !state.isOfflineMode && isServiceOnline
 
-    val currentBalance = user?.balance ?: dashboard?.balance
-    LaunchedEffect(currentBalance) {
-        if (currentBalance != null) {
-            NotificationScheduler.checkAndTriggerDailyLowBalanceAlertIfNeeded(context, currentBalance)
+    val expirationStr = service?.expiration
+    LaunchedEffect(expirationStr) {
+        if (!expirationStr.isNullOrBlank()) {
+            val expMillis = NotificationScheduler.parseDateToMillis(expirationStr)
+            if (expMillis != null && expMillis <= System.currentTimeMillis()) {
+                NotificationScheduler.checkAndTriggerExpiredAlertIfNeeded(context, expirationStr)
+            }
         }
     }
 
@@ -205,7 +216,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = user?.name ?: user?.username ?: "ياسين حامد",
+                        text = user?.name ?: user?.username ?: "ياسين طه",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -255,20 +266,9 @@ fun HomeScreen(
                 NavigationDrawerItem(
                     label = { Text("تفاصيل الاشتراك") },
                     selected = selectedTab == 1,
-                    icon = { Icon(Icons.Default.Dns, contentDescription = null) },
+                    icon = { Icon(Icons.Default.CardMembership, contentDescription = null, tint = SkylineBlue) },
                     onClick = {
                         selectedTab = 1
-                        scope.launch { drawerState.close() }
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-
-                NavigationDrawerItem(
-                    label = { Text("معلومات العميل") },
-                    selected = selectedTab == 3,
-                    icon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
-                    onClick = {
-                        selectedTab = 3
                         scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -286,23 +286,12 @@ fun HomeScreen(
                 )
 
                 NavigationDrawerItem(
-                    label = { Text("تحديث البيانات") },
-                    selected = false,
-                    icon = { Icon(Icons.Default.Refresh, contentDescription = null) },
-                    onClick = {
-                        viewModel.loadData(isRefresh = true)
-                        scope.launch { drawerState.close() }
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-
-                NavigationDrawerItem(
-                    label = { Text("عن المطور") },
-                    selected = selectedTab == 4,
+                    label = { Text("قسم المطور") },
+                    selected = selectedTab == 3,
                     icon = { Icon(Icons.Default.Code, contentDescription = null, tint = SkylineBlue) },
                     onClick = {
+                        selectedTab = 3
                         scope.launch { drawerState.close() }
-                        selectedTab = 4
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -408,10 +397,9 @@ fun HomeScreen(
                             }
                         } else {
                             val screenTitle = when (selectedTab) {
-                                1 -> stringResource(R.string.subscription_details)
-                                2 -> stringResource(R.string.nav_notifications)
-                                3 -> stringResource(R.string.customer_info)
-                                4 -> "عن المطور"
+                                1 -> "تفاصيل الاشتراك"
+                                2 -> "الإشعارات والتنبيهات"
+                                3 -> "عن المطور"
                                 else -> stringResource(R.string.app_name)
                             }
                             Text(
@@ -462,17 +450,6 @@ fun HomeScreen(
 
                         if (selectedTab == 0) {
                             IconButton(
-                                onClick = { selectedTab = 2 },
-                                modifier = Modifier.testTag("notifications_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.NotificationsNone,
-                                    contentDescription = "الإشعارات",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        } else {
-                            IconButton(
                                 onClick = { viewModel.loadData(isRefresh = true) },
                                 modifier = Modifier.testTag("refresh_button")
                             ) {
@@ -496,44 +473,63 @@ fun HomeScreen(
                 ) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_home)) },
-                        label = { Text(stringResource(R.string.nav_home), fontSize = 10.sp) },
-                        modifier = Modifier.testTag("nav_home")
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            selectedTab = 0
+                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
+                        label = { Text("الرئيسية", fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = SkylineBlue,
+                            selectedTextColor = SkylineBlue,
+                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
+                        ),
+                        modifier = Modifier.testTag("nav_item_home")
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.Dns, contentDescription = stringResource(R.string.nav_services)) },
-                        label = { Text(stringResource(R.string.nav_services), fontSize = 10.sp) },
-                        modifier = Modifier.testTag("nav_services")
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            selectedTab = 1
+                        },
+                        icon = { Icon(Icons.Default.CardMembership, contentDescription = "الاشتراك") },
+                        label = { Text("الاشتراك", fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = SkylineBlue,
+                            selectedTextColor = SkylineBlue,
+                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
+                        ),
+                        modifier = Modifier.testTag("nav_item_subscription")
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Notifications, contentDescription = stringResource(R.string.nav_notifications)) },
-                        label = { Text(stringResource(R.string.nav_notifications), fontSize = 10.sp) },
-                        modifier = Modifier.testTag("nav_notifications")
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            selectedTab = 2
+                        },
+                        icon = { Icon(Icons.Default.Notifications, contentDescription = "الإشعارات") },
+                        label = { Text("الإشعارات", fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = SkylineBlue,
+                            selectedTextColor = SkylineBlue,
+                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
+                        ),
+                        modifier = Modifier.testTag("nav_item_notifications")
                     )
                     NavigationBarItem(
                         selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.AccountCircle, contentDescription = stringResource(R.string.nav_more)) },
-                        label = { Text(stringResource(R.string.nav_more), fontSize = 10.sp) },
-                        modifier = Modifier.testTag("nav_customer")
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 4,
-                        onClick = { selectedTab = 4 },
-                        icon = { Icon(Icons.Default.Code, contentDescription = "عن المطور") },
-                        label = {
-                            Text(
-                                text = "عن المطور",
-                                fontSize = 10.sp,
-                                fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal
-                            )
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            selectedTab = 3
                         },
-                        modifier = Modifier.testTag("nav_developer")
+                        icon = { Icon(Icons.Default.Code, contentDescription = "المطور") },
+                        label = { Text("المطور", fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = SkylineBlue,
+                            selectedTextColor = SkylineBlue,
+                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
+                        ),
+                        modifier = Modifier.testTag("nav_item_developer")
                     )
                 }
             }
@@ -542,18 +538,22 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(
+                    .then(
                         if (isDark) {
-                            Brush.verticalGradient(
-                                0.0f to Color(0xFF061126),
-                                0.35f to Color(0xFF0B1932),
-                                1.0f to Color(0xFF061126)
+                            Modifier.background(
+                                Brush.verticalGradient(
+                                    0.0f to Color(0xFF061126),
+                                    0.35f to Color(0xFF0B1932),
+                                    1.0f to Color(0xFF061126)
+                                )
                             )
                         } else {
-                            Brush.verticalGradient(
-                                0.0f to Color(0xFFEBF2FD),
-                                0.30f to Color(0xFFF4F7FC),
-                                1.0f to Color(0xFFEDF2FA)
+                            Modifier.background(
+                                Brush.verticalGradient(
+                                    0.0f to Color(0xFFEBF2FD),
+                                    0.30f to Color(0xFFF4F7FC),
+                                    1.0f to Color(0xFFEDF2FA)
+                                )
                             )
                         }
                     )
@@ -617,7 +617,6 @@ fun HomeScreen(
 
                         when (selectedTab) {
                             0 -> {
-                                // Screen 3: الصفحة الرئيسية
                                 HomeScreenDashboard(
                                     user = user,
                                     service = service,
@@ -629,27 +628,24 @@ fun HomeScreen(
                                     isRefreshing = state.isRefreshing,
                                     lastUpdatedFormatted = state.lastUpdatedFormatted,
                                     onRefresh = { viewModel.loadData(isRefresh = true) },
-                                    onOpenSubscriptionDetails = { selectedTab = 1 },
-                                    onRenew = { showRenewDialog = true }
+                                    onRenew = { showRenewDialog = true },
+                                    onNavigateToSubscription = { selectedTab = 1 }
                                 )
                             }
                             1 -> {
-                                // Screen 5: تفاصيل الاشتراك
                                 SubscriptionDetailsScreen(
                                     user = user,
                                     service = service,
+                                    dashboard = dashboard,
                                     remainingDays = remainingDays,
                                     isServiceOnline = isServiceOnline,
                                     isSubscriptionActive = isSubscriptionActive,
-                                    isOnline = isDataOnline,
-                                    isRefreshing = state.isRefreshing,
-                                    lastUpdatedFormatted = state.lastUpdatedFormatted,
-                                    onRefresh = { viewModel.loadData(isRefresh = true) },
-                                    onRenew = { showRenewDialog = true }
+                                    onBack = { selectedTab = 0 },
+                                    onRenew = { showRenewDialog = true },
+                                    onRefresh = { viewModel.loadData(isRefresh = true) }
                                 )
                             }
                             2 -> {
-                                // Notifications view
                                 NotificationsTabScreen(
                                     user = user,
                                     dashboard = dashboard,
@@ -661,17 +657,7 @@ fun HomeScreen(
                                 )
                             }
                             3 -> {
-                                // Screen 4: معلومات العميل
-                                CustomerDetailsScreen(
-                                    user = user,
-                                    service = service,
-                                    remainingDays = remainingDays,
-                                    isServiceOnline = isServiceOnline,
-                                    isSubscriptionActive = isSubscriptionActive,
-                                    isOnline = isDataOnline,
-                                    isRefreshing = state.isRefreshing,
-                                    lastUpdatedFormatted = state.lastUpdatedFormatted,
-                                    onRefresh = { viewModel.loadData(isRefresh = true) },
+                                DeveloperScreen(
                                     onCopied = { msg ->
                                         scope.launch {
                                             snackbarHostState.showSnackbar(msg)
@@ -679,14 +665,20 @@ fun HomeScreen(
                                     }
                                 )
                             }
-                            4 -> {
-                                // Screen: عن المطور
-                                DeveloperScreen(
-                                    onCopied = { msg ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(msg)
-                                        }
-                                    }
+                            else -> {
+                                HomeScreenDashboard(
+                                    user = user,
+                                    service = service,
+                                    dashboard = dashboard,
+                                    remainingDays = remainingDays,
+                                    isServiceOnline = isServiceOnline,
+                                    isSubscriptionActive = isSubscriptionActive,
+                                    isOnline = isDataOnline,
+                                    isRefreshing = state.isRefreshing,
+                                    lastUpdatedFormatted = state.lastUpdatedFormatted,
+                                    onRefresh = { viewModel.loadData(isRefresh = true) },
+                                    onRenew = { showRenewDialog = true },
+                                    onNavigateToSubscription = { selectedTab = 1 }
                                 )
                             }
                         }
@@ -696,21 +688,71 @@ fun HomeScreen(
         }
     }
 
-    // Renew dialog
+    // Renew dialog & Agent Contact
     if (showRenewDialog) {
         AlertDialog(
             onDismissRequest = { showRenewDialog = false },
             title = {
-                Text(text = "تجديد الخدمة", fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Autorenew,
+                        contentDescription = null,
+                        tint = SkylineBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "تجديد وتفعيل الخدمة", fontWeight = FontWeight.Bold)
+                }
             },
             text = {
                 Column {
                     Text(
-                        text = "يمكنك تجديد اشتراك باقة (${service?.profileName ?: "2-Nitro"}) باستخدام كارت شحن Skyline أو عبر الرصيد المتوفر.",
+                        text = "يمكنك تجديد اشتراك باقة (${service?.profileName ?: "2-Nitro"}) بإدخال رمز كارت التعبئة (PIN)، أو التواصل المباشر مع الوكيل لتفعيل الاشتراك.",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(14.dp))
+
+                    // Contact Agent Button directly in Renew Dialog
+                    Button(
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            try {
+                                val msg = "مرحباً، أود تفعيل وتجديد اشتراك خدمة الإنترنت Skyline الخاصة بي.\nاسم المستخدم: ${user?.username ?: ""}"
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                scope.launch { snackbarHostState.showSnackbar("تعذر فتح تطبيق واتساب") }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_whatsapp),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("تواصل مع الوكيل للتفعيل عبر واتساب", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "أو أدخل كارت التعبئة مباشرة:",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = redeemPinInput,
                         onValueChange = { redeemPinInput = it },
@@ -734,7 +776,7 @@ fun HomeScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
                 ) {
-                    Text("تأكيد التجديد")
+                    Text("تأكيد التجديد بالكارت")
                 }
             },
             dismissButton = {
@@ -805,247 +847,170 @@ private fun HomeScreenDashboard(
     isRefreshing: Boolean = false,
     lastUpdatedFormatted: String = "",
     onRefresh: () -> Unit = {},
-    onOpenSubscriptionDetails: () -> Unit,
-    onRenew: () -> Unit
+    onRenew: () -> Unit,
+    onNavigateToSubscription: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    // Greeting Row
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(
-                text = "مرحبًا، ${user?.name ?: user?.username ?: "ياسين"} 👋",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = stringResource(R.string.welcome_subtitle),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+    // 1. Top Plan Header Card with circular gauge & real-time sync status
+    MiniPlanHeaderCard(
+        planName = service?.profileName ?: "2-Nitro",
+        isActive = isSubscriptionActive,
+        remainingDays = remainingDays,
+        isOnline = isOnline,
+        isRefreshing = isRefreshing,
+        lastUpdatedFormatted = lastUpdatedFormatted,
+        onRefresh = onRefresh,
+        onClick = onNavigateToSubscription
+    )
 
-        Box(
+    // Alert Banner if Subscription is Expired or Expiring in <= 3 days
+    if (!isSubscriptionActive || remainingDays <= 0) {
+        Spacer(modifier = Modifier.height(14.dp))
+        Card(
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(SkylineBlue.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .testTag("card_expired_warning_banner"),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.5f))
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                tint = SkylineBlue,
-                modifier = Modifier.size(36.dp)
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    // Card 1: الباقة الحالية
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("current_plan_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            // مؤشر حالة الاتصال بالإنترنت (Online / Offline) في الجزء العلوي من البطاقة
-            CardOnlineStatusIndicator(
-                isOnline = isOnline,
-                isRefreshing = isRefreshing,
-                lastUpdatedFormatted = lastUpdatedFormatted,
-                onRefresh = onRefresh
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.current_plan),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = service?.profileName ?: "2-Nitro",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    StatusBadge(isActive = isSubscriptionActive)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFEF4444).copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = Color(0xFFDC2626),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "انتهى اشتراكك الحالي!",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF991B1B)
+                        )
+                        Text(
+                            text = "يرجى تجديد الاشتراك أو التواصل مع الوكيل لتفعيل الخدمة فوراً",
+                            fontSize = 12.sp,
+                            color = Color(0xFFB91C1C)
+                        )
+                    }
                 }
 
-                CircularDaysGauge(
-                    days = remainingDays,
-                    percentage = if (remainingDays <= 0) 0f else (remainingDays / 30f).coerceIn(0.05f, 1f),
-                    size = 96.dp
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            try {
+                                val msg = "مرحباً، لقد انتهى اشتراكي وأود تفعيله عبر الوكيل.\nاسم المستخدم: ${user?.username ?: ""}"
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .height(44.dp)
+                            .testTag("btn_expired_contact_agent"),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_whatsapp),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("تواصل مع الوكيل للتفعيل", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            HapticFeedbackHelper.performClick(context, haptic)
+                            onRenew()
+                        },
+                        modifier = Modifier
+                            .weight(0.9f)
+                            .height(44.dp)
+                            .testTag("btn_expired_renew"),
+                        colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("تجديد بالكارت", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Dedicated highlighted expiration & remaining time banner inside the card
-            Box(
+        }
+    } else if (remainingDays in 1..3) {
+        Spacer(modifier = Modifier.height(14.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = Color(0xFFFFFBEB),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f))
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(SkylineBlue.copy(alpha = 0.08f))
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = SkylineBlue,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SkylineBlue
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Expiration Date
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.expiration_date),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = NotificationScheduler.formatArabicDate(service?.expiration),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SkylineBlue
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Balance & Unpaid Invoices
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.unpaid_invoices),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "IQD ${String.format(Locale.US, "%.2f", dashboard?.unpaidInvoices ?: 0.0)}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = stringResource(R.string.account_balance),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "IQD ${String.format(Locale.US, "%.2f", user?.balance ?: dashboard?.balance ?: 0.0)}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Interactive Subscription Card Buttons with tactile haptic feedback
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    onClick = {
-                        HapticFeedbackHelper.performClick(context, haptic)
-                        onRenew()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(46.dp)
-                        .testTag("subscription_card_renew_button"),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
-                ) {
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Autorenew,
+                        imageVector = Icons.Default.Notifications,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        tint = Color(0xFFD97706),
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.renew_service),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "اقترب موعد انتهاء الاشتراك ($remainingDays أيام متبقية)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF92400E)
+                        )
+                        Text(
+                            text = "يمكنك التواصل مسبقاً مع الوكيل لتجهيز التجديد",
+                            fontSize = 11.sp,
+                            color = Color(0xFFB45309)
+                        )
+                    }
                 }
-
-                OutlinedButton(
+                TextButton(
                     onClick = {
-                        HapticFeedbackHelper.performClick(context, haptic)
-                        onOpenSubscriptionDetails()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(46.dp)
-                        .testTag("subscription_card_details_button"),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue.copy(alpha = 0.5f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SkylineBlue)
+                        try {
+                            val msg = "مرحباً، اشتراكي سينتهي خلال $remainingDays أيام وأود تجديده.\nاسم المستخدم: ${user?.username ?: ""}"
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.subscription_details),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("مراسلة الوكيل", color = Color(0xFF25D366), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
@@ -1053,15 +1018,11 @@ private fun HomeScreenDashboard(
 
     Spacer(modifier = Modifier.height(14.dp))
 
-    // Card 2: معلومات الخدمة >
+    // 2. Account & Subscription Information Card
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                HapticFeedbackHelper.performClick(context, haptic)
-                onOpenSubscriptionDetails()
-            }
-            .testTag("service_summary_card"),
+            .testTag("account_subscription_card"),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -1069,240 +1030,106 @@ private fun HomeScreenDashboard(
         Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.service_info),
+                    text = "معلومات الحساب والاشتراك",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // الحالة: ONLINE
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.status),
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Circle,
-                        contentDescription = null,
-                        tint = if (isServiceOnline) SkylineOnline else Color.Gray,
-                        modifier = Modifier.size(8.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isServiceOnline) SkylineOnline.copy(alpha = 0.12f) else Color.Gray.copy(alpha = 0.12f)
+                ) {
                     Text(
-                        text = if (isServiceOnline) "ONLINE" else "OFFLINE",
-                        fontSize = 13.sp,
+                        text = if (isServiceOnline) "متصل • ONLINE" else "غير متصل • OFFLINE",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isServiceOnline) SkylineOnline else Color.Gray
+                        color = if (isServiceOnline) SkylineOnline else Color.Gray,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // السعر: IQD 45,000
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.price),
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // التجديد التلقائي
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.auto_renew),
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Switch(
-                    checked = user?.autoRenew == 1,
-                    onCheckedChange = null,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = SkylineBlue
-                    )
-                )
-            }
-        }
-    }
-}
-
-/**
- * Screen 4 in image: معلومات العميل
- */
-@Composable
-private fun CustomerDetailsScreen(
-    user: UserAccountData?,
-    service: ServiceData?,
-    remainingDays: Int,
-    isServiceOnline: Boolean,
-    isSubscriptionActive: Boolean,
-    isOnline: Boolean = true,
-    isRefreshing: Boolean = false,
-    lastUpdatedFormatted: String = "",
-    onRefresh: () -> Unit = {},
-    onCopied: (String) -> Unit
-) {
-    // Top Mini Card with Online/Offline sync status
-    MiniPlanHeaderCard(
-        planName = service?.profileName ?: "2-Nitro",
-        isActive = isSubscriptionActive,
-        remainingDays = remainingDays,
-        isOnline = isOnline,
-        isRefreshing = isRefreshing,
-        lastUpdatedFormatted = lastUpdatedFormatted,
-        onRefresh = onRefresh
-    )
-
-    Spacer(modifier = Modifier.height(14.dp))
-
-    // Card 1: معلومات الاشتراك
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("customer_subscription_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "معلومات الاشتراك",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
             Spacer(modifier = Modifier.height(14.dp))
 
-            InfoRow(label = stringResource(R.string.client), value = user?.name ?: "ياسين حامد")
-            InfoRow(label = stringResource(R.string.expiration_date), value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration), valueColor = SkylineBlue)
-            InfoRow(
-                label = stringResource(R.string.status),
-                value = if (isServiceOnline) "ONLINE" else "OFFLINE",
-                valueColor = if (isServiceOnline) SkylineOnline else Color.Gray
-            )
-            InfoRow(label = stringResource(R.string.price), value = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}")
-            InfoRow(label = stringResource(R.string.auto_renew), value = if (user?.autoRenew == 1) "مفعل" else "معطل")
-        }
-    }
-
-    Spacer(modifier = Modifier.height(14.dp))
-
-    // Card 2: معلومات الخدمة
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("customer_service_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "معلومات الخدمة",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            InfoRow(label = stringResource(R.string.service_speed), value = service?.downloadLimit ?: "--")
-            InfoRow(label = stringResource(R.string.static_ip), value = user?.staticIp ?: "--")
+            InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
             InfoRow(label = stringResource(R.string.username), value = user?.username ?: "bbn.17@haq2")
-            InfoRow(label = stringResource(R.string.password), value = "••••••••••")
-            InfoRow(label = stringResource(R.string.company), value = user?.company ?: "--")
-            InfoRow(label = stringResource(R.string.contract_id), value = user?.contractId ?: "300285")
+            InfoRow(
+                label = stringResource(R.string.expiration_date),
+                value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
+                valueColor = SkylineBlue
+            )
+            val currentBalance = user?.balance ?: dashboard?.balance ?: 0.0
+            InfoRow(
+                label = "الرصيد المتوفر",
+                value = "IQD ${String.format(Locale.US, "%,.2f", currentBalance)}",
+                valueColor = if (currentBalance > 0) SkylineSuccess else MaterialTheme.colorScheme.onSurface
+            )
+            InfoRow(
+                label = stringResource(R.string.price),
+                value = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}"
+            )
+            InfoRow(
+                label = stringResource(R.string.auto_renew),
+                value = if (user?.autoRenew == 1) "مفعل" else "معطل"
+            )
+
+            if (onNavigateToSubscription != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onNavigateToSubscription() }
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CardMembership,
+                            contentDescription = null,
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "عرض العداد التنازلي وتفاصيل الرصيد",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SkylineBlue
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = null,
+                        tint = SkylineBlue,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
         }
     }
 
     Spacer(modifier = Modifier.height(14.dp))
 
-    // Card 3: قسم المطور ودعم التطبيق (Instagram, WhatsApp, SUPER QI)
-    DeveloperSupportCard(onCopied = onCopied)
-    Spacer(modifier = Modifier.height(14.dp))
-}
-
-/**
- * Screen 5 in image: تفاصيل الاشتراك
- */
-@Composable
-private fun SubscriptionDetailsScreen(
-    user: UserAccountData?,
-    service: ServiceData?,
-    remainingDays: Int,
-    isServiceOnline: Boolean,
-    isSubscriptionActive: Boolean,
-    isOnline: Boolean = true,
-    isRefreshing: Boolean = false,
-    lastUpdatedFormatted: String = "",
-    onRefresh: () -> Unit = {},
-    onRenew: () -> Unit
-) {
-    val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
-
-    // Top Mini Card with Online/Offline sync status
-    MiniPlanHeaderCard(
-        planName = service?.profileName ?: "2-Nitro",
-        isActive = isSubscriptionActive,
-        remainingDays = remainingDays,
-        isOnline = isOnline,
-        isRefreshing = isRefreshing,
-        lastUpdatedFormatted = lastUpdatedFormatted,
-        onRefresh = onRefresh
-    )
-
-    Spacer(modifier = Modifier.height(14.dp))
-
-    // Card 1: معلومات الاشتراك
+    // 3. Service & Network Details Card
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("subscription_info_card"),
+            .testTag("service_network_card"),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
-                text = "معلومات الاشتراك",
+                text = "بيانات الاتصال والشبكة",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -1310,67 +1137,68 @@ private fun SubscriptionDetailsScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            InfoRow(label = stringResource(R.string.current_plan), value = service?.profileName ?: "2-Nitro")
-            InfoRow(label = stringResource(R.string.service_description), value = service?.description ?: user?.name ?: "ياسين حامد")
-            InfoRow(label = stringResource(R.string.expiration_date), value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration), valueColor = SkylineBlue)
-            InfoRow(
-                label = stringResource(R.string.status),
-                value = if (isServiceOnline) "ONLINE" else "OFFLINE",
-                valueColor = if (isServiceOnline) SkylineOnline else Color.Gray
-            )
-            InfoRow(label = stringResource(R.string.price), value = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}")
-            InfoRow(label = stringResource(R.string.auto_renew), value = if (user?.autoRenew == 1) "مفعل" else "معطل")
-        }
-    }
-
-    Spacer(modifier = Modifier.height(14.dp))
-
-    // Card 2: Contact & Contract details
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("subscription_contact_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            InfoRow(label = stringResource(R.string.phone), value = user?.phone ?: "--")
-            InfoRow(label = stringResource(R.string.address), value = user?.address ?: "--")
-            InfoRow(label = stringResource(R.string.company), value = user?.company ?: "--")
+            InfoRow(label = stringResource(R.string.service_speed), value = service?.downloadLimit ?: "غير محدد")
+            InfoRow(label = stringResource(R.string.static_ip), value = user?.staticIp ?: "--")
             InfoRow(label = stringResource(R.string.contract_id), value = user?.contractId ?: "300285")
+            InfoRow(label = stringResource(R.string.company), value = user?.company ?: "Skyline Internet")
         }
     }
 
     Spacer(modifier = Modifier.height(18.dp))
 
-    // Bottom Action Button: تجديد الخدمة
-    Button(
-        onClick = {
-            HapticFeedbackHelper.performClick(context, haptic)
-            onRenew()
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .testTag("renew_button"),
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
+    // 4. Quick Actions
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(
-            imageVector = Icons.Default.Autorenew,
-            contentDescription = null,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = stringResource(R.string.renew_service),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Button(
+            onClick = {
+                HapticFeedbackHelper.performClick(context, haptic)
+                onRenew()
+            },
+            modifier = Modifier
+                .weight(1f)
+                .height(50.dp)
+                .testTag("btn_renew_home"),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Autorenew,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.renew_service),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        OutlinedButton(
+            onClick = {
+                HapticFeedbackHelper.performClick(context, haptic)
+                onRefresh()
+            },
+            modifier = Modifier
+                .height(50.dp)
+                .testTag("btn_refresh_home"),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = SkylineBlue),
+            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = stringResource(R.string.refresh),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("تحديث", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
     }
 
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(14.dp))
 }
 
 /**
@@ -1384,12 +1212,16 @@ private fun MiniPlanHeaderCard(
     isOnline: Boolean = true,
     isRefreshing: Boolean = false,
     lastUpdatedFormatted: String = "",
-    onRefresh: (() -> Unit)? = null
+    onRefresh: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("mini_plan_card"),
+            .testTag("mini_plan_card")
+            .then(
+                if (onClick != null) Modifier.clickable { onClick() } else Modifier
+            ),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
@@ -1445,19 +1277,7 @@ private fun NotificationsTabScreen(
     val haptic = LocalHapticFeedback.current
     val expirationDateStr = service?.expiration ?: ""
     val isExpiringSoon = remainingDays in 1..3
-
-    var isLowBalanceEnabled by remember {
-        mutableStateOf(NotificationScheduler.isLowBalanceAlertEnabled(context))
-    }
-    var lowBalanceThreshold by remember {
-        mutableDoubleStateOf(NotificationScheduler.getLowBalanceThreshold(context))
-    }
-    var customThresholdText by remember {
-        mutableStateOf(String.format(Locale.US, "%.0f", lowBalanceThreshold))
-    }
-
-    val currentBalance = user?.balance ?: dashboard?.balance ?: 0.0
-    val isBalanceLow = currentBalance < lowBalanceThreshold
+    val isExpired = remainingDays <= 0
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1477,7 +1297,7 @@ private fun NotificationsTabScreen(
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isExpiringSoon) Color(0xFFEF4444).copy(alpha = 0.12f)
+                                if (isExpired || isExpiringSoon) Color(0xFFEF4444).copy(alpha = 0.12f)
                                 else SkylineBlue.copy(alpha = 0.12f)
                             ),
                         contentAlignment = Alignment.Center
@@ -1485,25 +1305,26 @@ private fun NotificationsTabScreen(
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = null,
-                            tint = if (isExpiringSoon) Color(0xFFEF4444) else SkylineBlue
+                            tint = if (isExpired || isExpiringSoon) Color(0xFFEF4444) else SkylineBlue
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "نظام تنبيهات الاشتراك والرصيد (WorkManager)",
+                            text = "نظام تنبيهات انتهاء الاشتراك (WorkManager)",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = if (expirationDateStr.isNotBlank()) {
-                                "تاريخ الانتهاء: $expirationDateStr ($remainingDays يوم متبقي)"
+                                if (isExpired) "انتهى الاشتراك: $expirationDateStr"
+                                else "تاريخ الانتهاء: $expirationDateStr ($remainingDays يوم متبقي)"
                             } else {
                                 "جاري مزامنة بيانات الاشتراك..."
                             },
                             fontSize = 12.sp,
-                            color = if (isExpiringSoon) Color(0xFFDC2626) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isExpired || isExpiringSoon) Color(0xFFDC2626) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -1513,7 +1334,7 @@ private fun NotificationsTabScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "مهام WorkManager المجدولة تلقائيًا في الخلفية:",
+                    text = "مهام إشعارات انتهاء الاشتراك المجدولة في الخلفية:",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1524,9 +1345,9 @@ private fun NotificationsTabScreen(
                 // Alert Item: 3 Days Before
                 WorkManagerAlertItem(
                     title = "تنبيه قبل 3 أيام (72 ساعة)",
-                    description = "إشعار محلي لتذكير المستخدم باقتراب موعد التجديد قبل 3 أيام",
+                    description = "إشعار محلي لتذكيرك باقتراب موعد انتهاء الاشتراك قبل 3 أيام",
                     isActive = true,
-                    highlight = true
+                    highlight = isExpiringSoon
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1534,7 +1355,7 @@ private fun NotificationsTabScreen(
                 // Alert Item: 24 Hours Before
                 WorkManagerAlertItem(
                     title = "تنبيه قبل 24 ساعة",
-                    description = "تنبيه عاجل مع بقاء يوم واحد على انتهاء الخدمة",
+                    description = "تنبيه عاجل مع بقاء يوم واحد فقط على انتهاء الاشتراك",
                     isActive = true,
                     highlight = false
                 )
@@ -1544,300 +1365,94 @@ private fun NotificationsTabScreen(
                 // Alert Item: 1 Hour Before
                 WorkManagerAlertItem(
                     title = "تنبيه قبل ساعة واحدة",
-                    description = "تنبيه أخير قبل توقف الخدمة خلال ساعة واحدة",
+                    description = "تنبيه أخير قبل توقف الخدمة خلال 60 دقيقة",
                     isActive = true,
                     highlight = false
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Alert Item: On Expiration
+                // Alert Item: On Expiration with Agent Contact
                 WorkManagerAlertItem(
-                    title = "تنبيه عند انتهاء الاشتراك",
-                    description = "إشعار فوري عند الوصول إلى لحظة انتهاء الاشتراك بالضبط",
+                    title = "تنبيه فوري عند انتهاء الاشتراك + زر تواصل مع الوكيل",
+                    description = "إشعار عند انتهاء الاشتراك فوراً يتضمن زراً مباشراً للتواصل مع الوكيل عبر واتساب لتفعيل الخدمة",
                     isActive = true,
-                    highlight = false
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Alert Item: Daily Low Balance Reminder
-                WorkManagerAlertItem(
-                    title = "تنبيه انخفاض الرصيد اليومي",
-                    description = if (isLowBalanceEnabled) {
-                        "تذكير يومي تلقائي عند انخفاض الرصيد عن ${String.format(Locale.US, "%,.0f", lowBalanceThreshold)} د.ع (الحالي: IQD ${String.format(Locale.US, "%,.2f", currentBalance)})"
-                    } else {
-                        "التنبيه اليومي للرصيد معطل حالياً"
-                    },
-                    isActive = isLowBalanceEnabled,
-                    highlight = isLowBalanceEnabled && isBalanceLow
+                    highlight = isExpired
                 )
             }
         }
 
-        // Low Balance Reminders Card
+        // Contact Agent Direct Card for Activation/Renewal
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("card_low_balance_reminders"),
+                .testTag("card_contact_agent_activation"),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
-                // Header Row with Icon, Title, and Switch
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isLowBalanceEnabled && isBalanceLow) Color(0xFFF59E0B).copy(alpha = 0.15f)
-                                    else SkylineBlue.copy(alpha = 0.12f)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CreditCard,
-                                contentDescription = null,
-                                tint = if (isLowBalanceEnabled && isBalanceLow) Color(0xFFD97706) else SkylineBlue
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "تنبيهات انخفاض الرصيد اليومية",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (isLowBalanceEnabled) "تنبيه يومي تلقائي عند وصول الرصيد للحد الأدنى"
-                                else "التنبيهات اليومية للرصيد معطلة حالياً",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Switch(
-                        checked = isLowBalanceEnabled,
-                        onCheckedChange = { isChecked ->
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            isLowBalanceEnabled = isChecked
-                            NotificationScheduler.setLowBalanceAlertEnabled(context, isChecked)
-                            if (isChecked) {
-                                onShowMessage("تم تفعيل تنبيهات انخفاض الرصيد اليومية")
-                                NotificationScheduler.checkAndTriggerDailyLowBalanceAlertIfNeeded(context, currentBalance)
-                            } else {
-                                onShowMessage("تم تعطيل تنبيهات انخفاض الرصيد اليومية")
-                            }
-                        },
-                        modifier = Modifier.testTag("switch_low_balance_reminder"),
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = SkylineBlue
-                        )
-                    )
-                }
-
-                if (isLowBalanceEnabled) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Current Balance vs Threshold status banner
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isBalanceLow) Color(0xFFFEF3C7) else Color(0xFFECFDF5),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (isBalanceLow) Color(0xFFF59E0B).copy(alpha = 0.5f) else Color(0xFF10B981).copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "رصيد الحساب الحالي",
-                                    fontSize = 11.sp,
-                                    color = if (isBalanceLow) Color(0xFF92400E) else Color(0xFF065F46)
-                                )
-                                Text(
-                                    text = "IQD ${String.format(Locale.US, "%,.2f", currentBalance)}",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isBalanceLow) Color(0xFFB45309) else Color(0xFF047857)
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (isBalanceLow) Color(0xFFDC2626) else Color(0xFF059669)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = if (isBalanceLow) Icons.Default.Info else Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = if (isBalanceLow) "أقل من الحد المحدد" else "الرصيد كافٍ",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "اختر الحد الأدنى للتنبيه اليومي:",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Preset chips (2,500 | 5,000 | 10,000 | 25,000)
-                    val presetThresholds = listOf(2500.0, 5000.0, 10000.0, 25000.0)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        presetThresholds.forEach { preset ->
-                            val isSelected = kotlin.math.abs(lowBalanceThreshold - preset) < 0.1
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        HapticFeedbackHelper.performClick(context, haptic)
-                                        lowBalanceThreshold = preset
-                                        customThresholdText = String.format(Locale.US, "%.0f", preset)
-                                        NotificationScheduler.setLowBalanceThreshold(context, preset)
-                                        onShowMessage("تم ضبط حد الرصيد على ${String.format(Locale.US, "%,.0f", preset)} د.ع")
-                                    },
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) SkylineBlue else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${String.format(Locale.US, "%,.0f", preset)}",
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Custom input field
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = customThresholdText,
-                            onValueChange = { newValue ->
-                                val filtered = newValue.filter { it.isDigit() }
-                                customThresholdText = filtered
-                                val parsed = filtered.toDoubleOrNull()
-                                if (parsed != null && parsed > 0) {
-                                    lowBalanceThreshold = parsed
-                                    NotificationScheduler.setLowBalanceThreshold(context, parsed)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("input_custom_threshold"),
-                            label = { Text("أو أدخل حداً مخصصاً (د.ع)", fontSize = 12.sp) },
-                            singleLine = true,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-
-                        Button(
-                            onClick = {
-                                val parsed = customThresholdText.toDoubleOrNull()
-                                if (parsed != null && parsed >= 0) {
-                                    HapticFeedbackHelper.performClick(context, haptic)
-                                    lowBalanceThreshold = parsed
-                                    NotificationScheduler.setLowBalanceThreshold(context, parsed)
-                                    onShowMessage("تم حفظ الحد: ${String.format(Locale.US, "%,.0f", parsed)} د.ع")
-                                }
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue),
-                            modifier = Modifier.testTag("btn_save_threshold")
-                        ) {
-                            Text("حفظ", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Test Notification Button
-                    OutlinedButton(
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            NotificationScheduler.triggerTestLowBalanceNotification(
-                                context = context,
-                                currentBalance = currentBalance,
-                                threshold = lowBalanceThreshold
-                            )
-                            onShowMessage("تم إرسال إشعار تجريبي لانخفاض الرصيد!")
-                        },
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("btn_test_low_balance_notification"),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD97706)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD97706))
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF25D366).copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Notifications,
+                            painter = painterResource(R.drawable.ic_whatsapp),
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "تجربة إشعار انخفاض الرصيد الآن",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
+                            tint = Color(0xFF25D366),
+                            modifier = Modifier.size(24.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "تفعيل الاشتراك عبر الوكيل",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "تواصل مباشرة مع الوكيل عبر واتساب لتجديد وتفعيل باقتك عند الانتهاء",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = {
+                        HapticFeedbackHelper.performClick(context, haptic)
+                        try {
+                            val msg = "مرحباً، أود تجديد وتفعيل اشتراك خدمة الإنترنت Skyline الخاصة بي.\nاسم المستخدم: ${user?.username ?: ""}"
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        } catch (_: Exception) {
+                            onShowMessage("تعذر فتح تطبيق واتساب")
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("btn_contact_agent_whatsapp"),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_whatsapp),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("مراسلة الوكيل لتفعيل الاشتراك", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
         }
@@ -1873,7 +1488,7 @@ private fun NotificationsTabScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "يتم فحص تاريخ الانتهاء تلقائيًا كل 12 ساعة لضمان إرسال الإشعارات حتى لو كان التطبيق مغلقًا",
+                            text = "يتم فحص تاريخ الانتهاء تلقائيًا كل 12 ساعة لضمان إرسال إشعار الانتهاء مع زر التواصل مع الوكيل حتى لو كان التطبيق مغلقًا",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1886,6 +1501,26 @@ private fun NotificationsTabScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
                 ) {
+                    Button(
+                        onClick = {
+                            NotificationScheduler.triggerTestNotification(
+                                context = context,
+                                alertType = ExpirationNotificationWorker.ALERT_EXPIRED,
+                                expirationDateStr = expirationDateStr.ifBlank { null }
+                            )
+                            onShowMessage("تم إرسال إشعار انتهاء الاشتراك التجريبي (مع زر التواصل مع الوكيل)!")
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("btn_test_expired_notification"),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("تجربة إشعار الانتهاء", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+
                     Button(
                         onClick = {
                             NotificationScheduler.triggerTestNotification(
@@ -1903,23 +1538,25 @@ private fun NotificationsTabScreen(
                     ) {
                         Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("تجربة إشعار 3 أيام", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("تجربة إشعار 3 أيام", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
+                }
 
-                    OutlinedButton(
-                        onClick = {
-                            NotificationScheduler.triggerImmediateCheck(context)
-                            onShowMessage("تم بدء مهمة فحص الاشتراك في الخلفية عبر WorkManager")
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("btn_run_workmanager_check"),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("فحص WorkManager", fontSize = 12.sp)
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        NotificationScheduler.triggerImmediateCheck(context)
+                        onShowMessage("تم بدء مهمة فحص الاشتراك في الخلفية عبر WorkManager")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("btn_run_workmanager_check"),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("فحص WorkManager الآن", fontSize = 12.sp)
                 }
             }
         }

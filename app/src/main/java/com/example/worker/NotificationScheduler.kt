@@ -20,11 +20,7 @@ object NotificationScheduler {
     const val PERIODIC_CHECK_WORK_NAME = "skyline_periodic_subscription_check"
     private const val PREFS_NAME = "skyline_notification_prefs"
     private const val KEY_LAST_3D_NOTIFIED_DATE = "last_notified_3d_exp_date"
-
-    const val KEY_LOW_BALANCE_ALERT_ENABLED = "low_balance_alert_enabled"
-    const val KEY_LOW_BALANCE_THRESHOLD = "low_balance_threshold"
-    const val KEY_LAST_LOW_BALANCE_NOTIFIED_DAY = "last_low_balance_notified_day"
-    const val DEFAULT_LOW_BALANCE_THRESHOLD = 5000.0
+    private const val KEY_LAST_EXPIRED_NOTIFIED_DATE = "last_notified_expired_exp_date"
 
     private val patternList = listOf(
         "yyyy-MM-dd HH:mm:ss",
@@ -160,9 +156,30 @@ object NotificationScheduler {
     }
 
     /**
+     * Checks if the subscription has expired and triggers the expired notification with the action
+     * to contact the agent for renewal/activation if not already sent for this expiration date.
+     */
+    fun checkAndTriggerExpiredAlertIfNeeded(
+        context: Context,
+        expirationDateStr: String
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val lastNotifiedDate = prefs.getString(KEY_LAST_EXPIRED_NOTIFIED_DATE, null)
+
+        if (lastNotifiedDate != expirationDateStr) {
+            ExpirationNotificationWorker.sendNotification(
+                context = context,
+                alertType = ExpirationNotificationWorker.ALERT_EXPIRED,
+                expirationDate = expirationDateStr
+            )
+            prefs.edit().putString(KEY_LAST_EXPIRED_NOTIFIED_DATE, expirationDateStr).apply()
+        }
+    }
+
+    /**
      * Schedules a recurring periodic WorkManager task that checks the subscription expiration date
      * every 12 hours (with flex interval of 1 hour) and triggers local notifications 3 days before
-     * expiration even when the app is in the background or killed.
+     * expiration, and when expired, even when the app is in the background or killed.
      */
     fun schedulePeriodicSubscriptionCheck(context: Context) {
         val workManager = WorkManager.getInstance(context)
@@ -205,90 +222,6 @@ object NotificationScheduler {
             Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3))
         )
         ExpirationNotificationWorker.sendNotification(context, alertType, displayDate)
-    }
-
-    /**
-     * Checks if low balance alerts are enabled. Defaults to true.
-     */
-    fun isLowBalanceAlertEnabled(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_LOW_BALANCE_ALERT_ENABLED, true)
-    }
-
-    /**
-     * Sets whether low balance alerts are enabled.
-     */
-    fun setLowBalanceAlertEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_LOW_BALANCE_ALERT_ENABLED, enabled)
-            .apply()
-    }
-
-    /**
-     * Retrieves the low balance threshold (IQD). Defaults to 5000 IQD.
-     */
-    fun getLowBalanceThreshold(context: Context): Double {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getFloat(KEY_LOW_BALANCE_THRESHOLD, DEFAULT_LOW_BALANCE_THRESHOLD.toFloat())
-            .toDouble()
-    }
-
-    /**
-     * Updates the low balance threshold (IQD).
-     */
-    fun setLowBalanceThreshold(context: Context, threshold: Double) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putFloat(KEY_LOW_BALANCE_THRESHOLD, threshold.toFloat())
-            .apply()
-    }
-
-    /**
-     * Checks if the user's balance is below the configured threshold and triggers
-     * a daily reminder notification if enabled and not already sent today.
-     */
-    fun checkAndTriggerDailyLowBalanceAlertIfNeeded(
-        context: Context,
-        currentBalance: Double
-    ): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val enabled = prefs.getBoolean(KEY_LOW_BALANCE_ALERT_ENABLED, true)
-        if (!enabled) return false
-
-        val threshold = prefs.getFloat(KEY_LOW_BALANCE_THRESHOLD, DEFAULT_LOW_BALANCE_THRESHOLD.toFloat()).toDouble()
-        if (currentBalance >= threshold) return false
-
-        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-        val lastNotifiedDay = prefs.getString(KEY_LAST_LOW_BALANCE_NOTIFIED_DAY, null)
-
-        if (lastNotifiedDay != todayStr) {
-            ExpirationNotificationWorker.sendLowBalanceNotification(
-                context = context,
-                currentBalance = currentBalance,
-                threshold = threshold
-            )
-            prefs.edit().putString(KEY_LAST_LOW_BALANCE_NOTIFIED_DAY, todayStr).apply()
-            return true
-        }
-        return false
-    }
-
-    /**
-     * Directly triggers a test notification for low balance alert.
-     */
-    fun triggerTestLowBalanceNotification(
-        context: Context,
-        currentBalance: Double? = null,
-        threshold: Double? = null
-    ) {
-        val effectiveThreshold = threshold ?: getLowBalanceThreshold(context)
-        val effectiveBalance = currentBalance ?: 0.0
-        ExpirationNotificationWorker.sendLowBalanceNotification(
-            context = context,
-            currentBalance = effectiveBalance,
-            threshold = effectiveThreshold
-        )
     }
 
     /**

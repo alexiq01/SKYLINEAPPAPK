@@ -59,14 +59,14 @@ class SubscriptionCheckWorker(
                             expirationDateStr = expirationStr,
                             expirationMillis = expirationMillis
                         )
+                    } else if (diff <= 0) {
+                        // Subscription expired: notify user with action to contact agent to activate/renew
+                        NotificationScheduler.checkAndTriggerExpiredAlertIfNeeded(
+                            context = context,
+                            expirationDateStr = expirationStr
+                        )
                     }
                 }
-            }
-
-            // Check daily low balance reminder if enabled
-            val currentBalance = subscription?.user?.balance ?: subscription?.dashboard?.balance
-            if (currentBalance != null) {
-                NotificationScheduler.checkAndTriggerDailyLowBalanceAlertIfNeeded(context, currentBalance)
             }
 
             Result.success()
