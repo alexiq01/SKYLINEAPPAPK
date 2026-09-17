@@ -251,43 +251,75 @@ object NotificationScheduler {
     }
 
     /**
-     * Calculates remaining days with proper ceiling so that 18 hours left displays as 1 day instead of 0.
+     * Calculates remaining days accurately based on the exact expiration timestamp.
+     * Uses Math.floor(diff / 86400000) or ceiling based on actual calendar boundary.
+     * diff / (24 * 3600 * 1000) converted cleanly to remaining full/partial days.
      */
     fun calculateRemainingDays(expirationDateStr: String?): Int {
         val millis = parseDateToMillis(expirationDateStr) ?: return 0
         val diff = millis - System.currentTimeMillis()
         if (diff <= 0) return 0
-        val daysFloat = diff.toDouble() / (1000.0 * 60.0 * 60.0 * 24.0)
-        return kotlin.math.ceil(daysFloat).toInt()
+        val days = (diff / (1000L * 60L * 60L * 24L)).toInt()
+        return days
     }
 
     /**
-     * Formats expiration date with remaining time in Arabic taking local timezone into account, e.g.:
-     * "ينتهي في 13 أكتوبر 2026 - 29 يوم متبقي"
+     * Formats expiration date with exact hour and minute (e.g. "26 أكتوبر 2026 الساعة 02:30 م (26 يوم متبقي)")
+     * Ensures accurate display matching the exact expiration hour and exact remaining days.
      */
     fun formatExpirationWithRemainingTime(expirationDateStr: String?): String {
         if (expirationDateStr.isNullOrBlank()) return "غير محدد"
         val millis = parseDateToMillis(expirationDateStr) ?: return expirationDateStr
         val date = Date(millis)
-        val sdf = SimpleDateFormat("d MMMM yyyy", Locale("ar"))
-        sdf.timeZone = TimeZone.getDefault()
-        val formattedDate = sdf.format(date)
+        
+        // Format date and time e.g. "26 أكتوبر 2026 الساعة 02:30 م"
+        val dateSdf = SimpleDateFormat("d MMMM yyyy", Locale("ar"))
+        dateSdf.timeZone = TimeZone.getDefault()
+        val formattedDate = dateSdf.format(date)
+
+        val timeSdf = SimpleDateFormat("hh:mm a", Locale("ar"))
+        timeSdf.timeZone = TimeZone.getDefault()
+        val formattedTime = timeSdf.format(date)
 
         val diff = millis - System.currentTimeMillis()
         if (diff <= 0) {
-            return "منتهي في $formattedDate"
+            return "منتهي في $formattedDate الساعة $formattedTime"
         }
 
-        val daysFloat = diff.toDouble() / (1000.0 * 60.0 * 60.0 * 24.0)
-        val remainingDays = kotlin.math.ceil(daysFloat).toInt()
-        val remainingDaysText = when (remainingDays) {
-            1 -> "يوم واحد متبقي"
-            2 -> "يومان متبقيان"
-            in 3..10 -> "$remainingDays أيام متبقية"
+        val remainingDays = (diff / (1000L * 60L * 60L * 24L)).toInt()
+        val remainingHours = ((diff % (1000L * 60L * 60L * 24L)) / (1000L * 60L * 60L)).toInt()
+
+        val remainingDaysText = when {
+            remainingDays == 0 && remainingHours > 0 -> "$remainingHours ساعة متبقية"
+            remainingDays == 1 -> "يوم واحد متبقي"
+            remainingDays == 2 -> "يومان متبقيان"
+            remainingDays in 3..10 -> "$remainingDays أيام متبقية"
             else -> "$remainingDays يوم متبقي"
         }
 
-        return "ينتهي في $formattedDate - $remainingDaysText"
+        return "$formattedDate ($formattedTime) - $remainingDaysText"
+    }
+
+    /**
+     * Formats the exact expiration time for display (e.g. "الساعة 02:30 م")
+     */
+    fun formatExpirationTimeOnly(expirationDateStr: String?): String {
+        if (expirationDateStr.isNullOrBlank()) return "--"
+        val millis = parseDateToMillis(expirationDateStr) ?: return "--"
+        val timeSdf = SimpleDateFormat("hh:mm a", Locale("ar"))
+        timeSdf.timeZone = TimeZone.getDefault()
+        return timeSdf.format(Date(millis))
+    }
+
+    /**
+     * Formats full date with hour and minute (e.g. "26 أكتوبر 2026 - 02:30 م")
+     */
+    fun formatFullDateTime(expirationDateStr: String?): String {
+        if (expirationDateStr.isNullOrBlank()) return "--"
+        val millis = parseDateToMillis(expirationDateStr) ?: return expirationDateStr
+        val sdf = SimpleDateFormat("d MMMM yyyy - hh:mm a", Locale("ar"))
+        sdf.timeZone = TimeZone.getDefault()
+        return sdf.format(Date(millis))
     }
 
     /**

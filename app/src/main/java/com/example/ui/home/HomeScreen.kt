@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
@@ -1263,7 +1264,8 @@ private fun MiniPlanHeaderCard(
 }
 
 /**
- * Notifications view displaying WorkManager subscription alerts status and test actions
+ * Dedicated clean Notifications feed for user alerts (subscription expiration, warnings, updates)
+ * Free of technical jargon (WorkManager, PeriodicWorkRequest, etc.)
  */
 @Composable
 private fun NotificationsTabScreen(
@@ -1275,288 +1277,211 @@ private fun NotificationsTabScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val isDark = isAppInDarkTheme()
     val expirationDateStr = service?.expiration ?: ""
-    val isExpiringSoon = remainingDays in 1..3
     val isExpired = remainingDays <= 0
+    val isExpiringSoon = remainingDays in 1..3
+
+    val inboxItems by com.example.notifications.NotificationInboxManager.notificationsFlow.collectAsState()
+
+    // Automatically generate system subscription alert in inbox if not already there and expiring soon / expired
+    LaunchedEffect(remainingDays, expirationDateStr) {
+        if (expirationDateStr.isNotBlank() && inboxItems.isEmpty()) {
+            if (isExpired) {
+                com.example.notifications.NotificationInboxManager.addNotification(
+                    context = context,
+                    title = "انتهى اشتراك الإنترنت",
+                    message = "انتهت صلاحية اشتراكك الحالي ($expirationDateStr). يرجى التجديد لتجنب انقطاع الخدمة.",
+                    type = "expired"
+                )
+            } else if (isExpiringSoon) {
+                com.example.notifications.NotificationInboxManager.addNotification(
+                    context = context,
+                    title = "تنبيه: اقتراب انتهاء الاشتراك",
+                    message = "متبقي $remainingDays أيام على انتهاء اشتراكك الحالي ($expirationDateStr).",
+                    type = "expiring_soon"
+                )
+            }
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Status overview card
+        // Notifications Header & Quick Actions Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF0D1B33) else Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
+            )
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isExpired || isExpiringSoon) Color(0xFFEF4444).copy(alpha = 0.12f)
-                                else SkylineBlue.copy(alpha = 0.12f)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = null,
-                            tint = if (isExpired || isExpiringSoon) Color(0xFFEF4444) else SkylineBlue
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "نظام تنبيهات انتهاء الاشتراك (WorkManager)",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (expirationDateStr.isNotBlank()) {
-                                if (isExpired) "انتهى الاشتراك: $expirationDateStr"
-                                else "تاريخ الانتهاء: $expirationDateStr ($remainingDays يوم متبقي)"
-                            } else {
-                                "جاري مزامنة بيانات الاشتراك..."
-                            },
-                            fontSize = 12.sp,
-                            color = if (isExpired || isExpiringSoon) Color(0xFFDC2626) else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "مهام إشعارات انتهاء الاشتراك المجدولة في الخلفية:",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Alert Item: 3 Days Before
-                WorkManagerAlertItem(
-                    title = "تنبيه قبل 3 أيام (72 ساعة)",
-                    description = "إشعار محلي لتذكيرك باقتراب موعد انتهاء الاشتراك قبل 3 أيام",
-                    isActive = true,
-                    highlight = isExpiringSoon
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Alert Item: 24 Hours Before
-                WorkManagerAlertItem(
-                    title = "تنبيه قبل 24 ساعة",
-                    description = "تنبيه عاجل مع بقاء يوم واحد فقط على انتهاء الاشتراك",
-                    isActive = true,
-                    highlight = false
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Alert Item: 1 Hour Before
-                WorkManagerAlertItem(
-                    title = "تنبيه قبل ساعة واحدة",
-                    description = "تنبيه أخير قبل توقف الخدمة خلال 60 دقيقة",
-                    isActive = true,
-                    highlight = false
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Alert Item: On Expiration with Agent Contact
-                WorkManagerAlertItem(
-                    title = "تنبيه فوري عند انتهاء الاشتراك + زر تواصل مع الوكيل",
-                    description = "إشعار عند انتهاء الاشتراك فوراً يتضمن زراً مباشراً للتواصل مع الوكيل عبر واتساب لتفعيل الخدمة",
-                    isActive = true,
-                    highlight = isExpired
-                )
-            }
-        }
-
-        // Contact Agent Direct Card for Activation/Renewal
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("card_contact_agent_activation"),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF25D366).copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_whatsapp),
-                            contentDescription = null,
-                            tint = Color(0xFF25D366),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "تفعيل الاشتراك عبر الوكيل",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "تواصل مباشرة مع الوكيل عبر واتساب لتجديد وتفعيل باقتك عند الانتهاء",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Button(
-                    onClick = {
-                        HapticFeedbackHelper.performClick(context, haptic)
-                        try {
-                            val msg = "مرحباً، أود تجديد وتفعيل اشتراك خدمة الإنترنت Skyline الخاصة بي.\nاسم المستخدم: ${user?.username ?: ""}"
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            }
-                            context.startActivity(intent)
-                        } catch (_: Exception) {
-                            onShowMessage("تعذر فتح تطبيق واتساب")
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("btn_contact_agent_whatsapp"),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_whatsapp),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("مراسلة الوكيل لتفعيل الاشتراك", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-            }
-        }
-
-        // Background sync info card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(SkylineSuccess.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            tint = SkylineSuccess
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "فحص دوري بالخلفية (PeriodicWorkRequest)",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "يتم فحص تاريخ الانتهاء تلقائيًا كل 12 ساعة لضمان إرسال إشعار الانتهاء مع زر التواصل مع الوكيل حتى لو كان التطبيق مغلقًا",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
-                        onClick = {
-                            NotificationScheduler.triggerTestNotification(
-                                context = context,
-                                alertType = ExpirationNotificationWorker.ALERT_EXPIRED,
-                                expirationDateStr = expirationDateStr.ifBlank { null }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(SkylineBlue, SkylineCyan)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "الإشعارات",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
                             )
-                            onShowMessage("تم إرسال إشعار انتهاء الاشتراك التجريبي (مع زر التواصل مع الوكيل)!")
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("btn_test_expired_notification"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("تجربة إشعار الانتهاء", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "مركز الإشعارات",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (inboxItems.isEmpty()) "لا توجد إشعارات جديدة"
+                                else "${inboxItems.size} إشعار مسجل",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            NotificationScheduler.triggerTestNotification(
-                                context = context,
-                                alertType = ExpirationNotificationWorker.ALERT_3D,
-                                expirationDateStr = expirationDateStr.ifBlank { null }
+                    if (inboxItems.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                HapticFeedbackHelper.performClick(context, haptic)
+                                com.example.notifications.NotificationInboxManager.clearAll(context)
+                                onShowMessage("تم مسح كافة الإشعارات")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "مسح الكل",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            onShowMessage("تم إرسال إشعار تجريبي (قبل 3 أيام) بنجاح!")
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("btn_test_3d_notification"),
-                        colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("تجربة إشعار 3 أيام", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // If expiring soon or expired, show direct alert box
+                if (isExpired || isExpiringSoon) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isExpired) Color(0xFFEF4444).copy(alpha = 0.10f)
+                               else Color(0xFFF59E0B).copy(alpha = 0.12f),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isExpired) Color(0xFFEF4444).copy(alpha = 0.3f)
+                            else Color(0xFFF59E0B).copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = if (isExpired) Color(0xFFEF4444) else Color(0xFFD97706),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (isExpired) "انتهى اشتراك الإنترنت" else "تنبيه قرب انتهاء الاشتراك",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (isExpired) Color(0xFFDC2626) else Color(0xFFB45309)
+                                )
+                                Text(
+                                    text = if (isExpired) "تاريخ الانتهاء: $expirationDateStr"
+                                           else "متبقي $remainingDays يوم - تاريخ الانتهاء: $expirationDateStr",
+                                    fontSize = 11.sp,
+                                    color = if (isExpired) Color(0xFFDC2626) else Color(0xFFB45309)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-                OutlinedButton(
-                    onClick = {
-                        NotificationScheduler.triggerImmediateCheck(context)
-                        onShowMessage("تم بدء مهمة فحص الاشتراك في الخلفية عبر WorkManager")
-                    },
+        // Dedicated Notification Feed List
+        if (inboxItems.isEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDark) Color(0xFF0D1B33).copy(alpha = 0.6f) else Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("btn_run_workmanager_check"),
-                    shape = RoundedCornerShape(10.dp)
+                        .padding(vertical = 40.dp, horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("فحص WorkManager الآن", fontSize = 12.sp)
+                    Box(
+                        modifier = Modifier
+                            .size(68.dp)
+                            .clip(CircleShape)
+                            .background(SkylineBlue.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsNone,
+                            contentDescription = null,
+                            tint = SkylineBlue.copy(alpha = 0.6f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "صندوق الإشعارات فارغ",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "ستظهر هنا كافة إشعارات وتنبيهات انتهاء الاشتراك فور وصولها",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                inboxItems.forEach { item ->
+                    NotificationFeedCard(item = item)
                 }
             }
         }
@@ -1564,58 +1489,84 @@ private fun NotificationsTabScreen(
 }
 
 @Composable
-private fun WorkManagerAlertItem(
-    title: String,
-    description: String,
-    isActive: Boolean,
-    highlight: Boolean
-) {
-    Row(
+private fun NotificationFeedCard(item: com.example.notifications.AppNotificationItem) {
+    val isDark = isAppInDarkTheme()
+    val isExpired = item.type == "expired"
+    val isExpiringSoon = item.type == "expiring_soon" || item.type == "3d" || item.type == "24h" || item.type == "1h"
+
+    val iconColor = when {
+        isExpired -> Color(0xFFEF4444)
+        isExpiringSoon -> Color(0xFFF59E0B)
+        else -> SkylineBlue
+    }
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                if (highlight) SkylineBlue.copy(alpha = 0.07f)
-                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-            )
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = if (highlight) Icons.Default.Notifications else Icons.Default.CheckCircle,
-            contentDescription = null,
-            tint = if (highlight) SkylineBlue else SkylineSuccess,
-            modifier = Modifier.size(20.dp)
+            .testTag("notification_item_${item.id}"),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) Color(0xFF0D1B33) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDark) iconColor.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
         )
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (highlight) SkylineBlue else MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = description,
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Box(
+    ) {
+        Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .background(
-                    if (highlight) SkylineBlue.copy(alpha = 0.15f)
-                    else SkylineSuccess.copy(alpha = 0.12f)
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Text(
-                text = if (highlight) "3 أيام (جديد)" else "نشط",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (highlight) SkylineBlue else SkylineSuccess
-            )
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(iconColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = item.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (item.formattedTime.isNotBlank()) {
+                        Text(
+                            text = item.formattedTime,
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = item.message,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 17.sp
+                )
+            }
         }
     }
 }

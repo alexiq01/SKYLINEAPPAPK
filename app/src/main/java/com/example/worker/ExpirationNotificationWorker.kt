@@ -116,6 +116,17 @@ class ExpirationNotificationWorker(
             }
 
             notificationManager.notify(notificationId, builder.build())
+
+            // Record into local Notification Inbox so user sees it in their Notifications tab
+            try {
+                val fullMsg = if (expirationDate.isNotBlank()) "$message ($expirationDate)" else message
+                com.example.notifications.NotificationInboxManager.addNotification(
+                    context = context,
+                    title = title,
+                    message = fullMsg,
+                    type = alertType
+                )
+            } catch (_: Exception) {}
         }
     }
 

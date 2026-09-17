@@ -59,6 +59,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import com.example.ui.theme.SFMonoFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -135,11 +136,17 @@ fun DeveloperSupportCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("developer_support_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
+        )
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             // Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -147,20 +154,21 @@ fun DeveloperSupportCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(46.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.linearGradient(
                                 colors = listOf(SkylineBlue, SkylineCyan)
                             )
-                        ),
+                        )
+                        .border(2.dp, SkylineCyan.copy(alpha = 0.35f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Code,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -170,7 +178,7 @@ fun DeveloperSupportCard(
                     Text(
                         text = "قسم المطور ودعم التطبيق",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -182,7 +190,7 @@ fun DeveloperSupportCard(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            HorizontalDivider(color = if (isDark) Color(0xFF1E3A5F) else Color(0xFFE2E8F0))
             Spacer(modifier = Modifier.height(14.dp))
 
             // Social & Contact Links (Instagram & WhatsApp)
@@ -195,11 +203,12 @@ fun DeveloperSupportCard(
                     onClick = { openUrl(DEVELOPER_INSTAGRAM_URL) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(46.dp)
+                        .height(48.dp)
                         .testTag("instagram_button"),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (isDark) Color(0xFFFF7FB2) else Color(0xFFC13584)
+                        contentColor = if (isDark) Color(0xFFFF7FB2) else Color(0xFFC13584),
+                        containerColor = if (isDark) Color(0xFF200F1F) else Color(0xFFFDF2F8)
                     ),
                     border = ButtonDefaults.outlinedButtonBorder.copy(
                         brush = Brush.linearGradient(listOf(Color(0xFFE1306C), Color(0xFF833AB4)))
@@ -224,11 +233,12 @@ fun DeveloperSupportCard(
                     onClick = { openUrl(DEVELOPER_WHATSAPP_URL) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(46.dp)
+                        .height(48.dp)
                         .testTag("whatsapp_button"),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (isDark) Color(0xFF4ADE80) else Color(0xFF128C7E)
+                        contentColor = if (isDark) Color(0xFF4ADE80) else Color(0xFF128C7E),
+                        containerColor = if (isDark) Color(0xFF0C2417) else Color(0xFFF0FDF4)
                     ),
                     border = ButtonDefaults.outlinedButtonBorder.copy(
                         brush = Brush.linearGradient(listOf(Color(0xFF25D366), Color(0xFF128C7E)))
@@ -334,7 +344,7 @@ fun DeveloperSupportCard(
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 1.5.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = SFMonoFontFamily,
                                     color = qiNumText
                                 )
                             }
@@ -387,7 +397,6 @@ fun DeveloperScreen(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
     val isDark = isAppInDarkTheme()
 
     fun copyText(label: String, text: String) {
@@ -414,73 +423,81 @@ fun DeveloperScreen(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("developer_screen"),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Developer Profile Hero Card
+        // 1. Developer Profile Hero Card - Modern Card with gradient and badges
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
+            )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
+                        .size(80.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.linearGradient(
                                 listOf(SkylineBlue, SkylineCyan)
                             )
-                        ),
+                        )
+                        .border(3.dp, SkylineCyan.copy(alpha = 0.4f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "ياسين طه Yassin Taha (Software Engineer)",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "ياسين طه Yassin Taha",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(50.dp),
                     color = SkylineBlue.copy(alpha = 0.12f),
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue.copy(alpha = 0.25f))
                 ) {
                     Text(
                         text = "Software Engineer • مهندس برمجيات",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = SkylineBlue,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "تطوير وهندسة برمجيات تطبيق Skyline Internet بحلول ذكية وسريعة.",
+                    text = "تطوير وهندسة برمجيات تطبيق Skyline Internet لتقديم أفضل تجربة متابعة اشتراك وتنبيهات فورية للمشتركين.",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    lineHeight = 19.sp
                 )
             }
         }
@@ -489,8 +506,14 @@ fun DeveloperScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
+            )
         ) {
             Row(
                 modifier = Modifier
@@ -502,7 +525,7 @@ fun DeveloperScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
                             .background(
                                 if (isDark) Color(0xFF312E81).copy(alpha = 0.5f) else Color(0xFFFEF3C7)
@@ -513,7 +536,7 @@ fun DeveloperScreen(
                             imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
                             contentDescription = null,
                             tint = if (isDark) Color(0xFFA5B4FC) else Color(0xFFD97706),
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
@@ -521,13 +544,13 @@ fun DeveloperScreen(
 
                     Column {
                         Text(
-                            text = "الوضع الليلي (Dark Mode)",
+                            text = "مظهر التطبيق (Dark Mode)",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = if (isDark) "مفعل - عرض ليلي مريح للاشتراك" else "معطل - العرض الفاتح الافتراضي",
+                            text = if (isDark) "الوضع الليلي مفعّل 🌙" else "الوضع الفاتح مفعّل ☀️",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -552,23 +575,51 @@ fun DeveloperScreen(
         // 3. Detailed Contact Channels (Instagram & WhatsApp) with Clear Data and Icons
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
+            )
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
-                Text(
-                    text = "قنوات التواصل المباشر مع المطور",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(14.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(SkylineBlue.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "قنوات التواصل المباشر مع المطور",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Instagram Row
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isDark) Color(0xFF132240) else Color(0xFFF8FAFC),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isDark) Color(0xFF833AB4).copy(alpha = 0.3f) else Color(0xFFE2E8F0)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -581,7 +632,7 @@ fun DeveloperScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Box(
                                 modifier = Modifier
-                                    .size(42.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(
                                         Brush.linearGradient(
@@ -617,20 +668,20 @@ fun DeveloperScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             IconButton(
                                 onClick = { copyText("رابط الإنستغرام", DEVELOPER_INSTAGRAM_URL) },
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(38.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
                                     contentDescription = "نسخ الرابط",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(19.dp)
                                 )
                             }
                             Button(
                                 onClick = { openUrl(DEVELOPER_INSTAGRAM_URL) },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE1306C)),
-                                modifier = Modifier.height(36.dp)
+                                modifier = Modifier.height(38.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.OpenInNew,
@@ -638,7 +689,7 @@ fun DeveloperScreen(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("فتح", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("متابعة", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -648,8 +699,12 @@ fun DeveloperScreen(
 
                 // WhatsApp Row
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isDark) Color(0xFF132240) else Color(0xFFF8FAFC),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isDark) Color(0xFF25D366).copy(alpha = 0.3f) else Color(0xFFE2E8F0)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -662,7 +717,7 @@ fun DeveloperScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Box(
                                 modifier = Modifier
-                                    .size(42.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(Color(0xFF25D366)),
                                 contentAlignment = Alignment.Center
@@ -687,7 +742,7 @@ fun DeveloperScreen(
                                     fontSize = 13.sp,
                                     color = Color(0xFF10B981),
                                     fontWeight = FontWeight.SemiBold,
-                                    fontFamily = FontFamily.Monospace
+                                    fontFamily = SFMonoFontFamily
                                 )
                             }
                         }
@@ -695,20 +750,20 @@ fun DeveloperScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             IconButton(
                                 onClick = { copyText("رقم الواتساب", DEVELOPER_WHATSAPP_NUMBER) },
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(38.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
                                     contentDescription = "نسخ الرقم",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(19.dp)
                                 )
                             }
                             Button(
                                 onClick = { openUrl(DEVELOPER_WHATSAPP_URL) },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF128C7E)),
-                                modifier = Modifier.height(36.dp)
+                                modifier = Modifier.height(38.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_whatsapp),
@@ -728,40 +783,7 @@ fun DeveloperScreen(
         // 4. Dedicated Super Qi Support Card
         DeveloperSupportCard(onCopied = onCopied)
 
-        // 5. System & Security Info Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Security,
-                        contentDescription = null,
-                        tint = SkylineBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "أمان وتشفير البيانات",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "يتم تشفير كافة البيانات والاتصالات محلياً وسحابياً عبر تقنية OpenSSL AES-256-CBC المتوافقة مع سيرفرات Skyline Internet مع حماية خصوصية العميل التامة.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 18.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 

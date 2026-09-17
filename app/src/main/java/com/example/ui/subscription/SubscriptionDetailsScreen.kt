@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -83,6 +81,7 @@ import com.example.data.api.UserAccountData
 import com.example.ui.components.DEVELOPER_WHATSAPP_NUMBER
 import com.example.ui.components.InfoRow
 import com.example.ui.components.StatusBadge
+import com.example.ui.theme.SFMonoFontFamily
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
@@ -156,9 +155,8 @@ fun SubscriptionDetailsScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .testTag("screen_subscription_details")
-            .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp)
     ) {
         // 1. Hero Countdown Card
@@ -550,7 +548,7 @@ fun SubscriptionDetailsScreen(
                 InfoRow(label = stringResource(R.string.username), value = user?.username ?: "bbn.17@haq2")
                 InfoRow(
                     label = "تاريخ ووقت الانتهاء",
-                    value = expirationDateStr.ifBlank { "--" },
+                    value = NotificationScheduler.formatFullDateTime(expirationDateStr),
                     valueColor = if (isExpired) Color(0xFFDC2626) else SkylineBlue
                 )
                 InfoRow(
@@ -654,6 +652,7 @@ private fun CountdownUnitBox(
                 text = String.format(Locale.US, "%02d", value),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
+                fontFamily = SFMonoFontFamily,
                 color = highlightColor
             )
             Spacer(modifier = Modifier.height(2.dp))

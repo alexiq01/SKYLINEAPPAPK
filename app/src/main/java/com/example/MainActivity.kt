@@ -24,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.data.repository.SkylineRepository
+import com.example.security.AppSecurityEngine
 import com.example.ui.home.HomeScreen
 import com.example.ui.home.HomeViewModel
 import com.example.ui.login.LoginScreen
@@ -35,6 +36,8 @@ import com.example.worker.NotificationScheduler
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppSecurityEngine.initializeSilently(this)
+        com.example.notifications.NotificationInboxManager.init(applicationContext)
         com.example.ui.theme.ThemeController.init(this)
         enableEdgeToEdge()
 

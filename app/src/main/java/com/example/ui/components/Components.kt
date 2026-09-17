@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import com.example.ui.theme.NewYorkFontFamily
+import com.example.ui.theme.SFProFontFamily
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -96,6 +98,7 @@ fun SkylineBrandHeader(
             text = stringResource(R.string.app_name),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = SFProFontFamily,
             color = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground,
             letterSpacing = 0.5.sp
         )
@@ -104,6 +107,7 @@ fun SkylineBrandHeader(
             text = "SKYLINE",
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
+            fontFamily = SFProFontFamily,
             color = SkylineCyan,
             letterSpacing = 4.sp
         )
