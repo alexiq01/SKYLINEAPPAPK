@@ -223,32 +223,11 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = user?.username ?: "bbn.17@haq2",
+                        text = user?.username ?: "ha@haq3",
                         fontSize = 13.sp,
                         color = SkylineBlue
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Dns,
-                            contentDescription = null,
-                            tint = SkylineCyan,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "admin.skylineiq.com/user",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -1057,7 +1036,7 @@ private fun HomeScreenDashboard(
             Spacer(modifier = Modifier.height(14.dp))
 
             InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
-            InfoRow(label = stringResource(R.string.username), value = user?.username ?: "bbn.17@haq2")
+            InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
             InfoRow(
                 label = stringResource(R.string.expiration_date),
                 value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),

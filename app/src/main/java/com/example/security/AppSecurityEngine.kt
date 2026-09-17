@@ -24,10 +24,11 @@ object AppSecurityEngine {
      */
     fun applyWindowProtection(activity: Activity) {
         try {
-            activity.window.setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
+            // Disabled: FLAG_SECURE causes a black screen when viewed via streaming emulator.
+            // activity.window.setFlags(
+            //     WindowManager.LayoutParams.FLAG_SECURE,
+            //     WindowManager.LayoutParams.FLAG_SECURE
+            // )
         } catch (_: Exception) {
             // Silently continue if window is unavailable
         }

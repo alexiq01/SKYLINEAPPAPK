@@ -8,14 +8,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * Global Theme Controller for toggling between Light and Dark mode.
+ * Global Theme Controller for toggling between Light and Dark mode, and controlling font size.
  * Persists user preference across app sessions.
  */
 object ThemeController {
     private const val PREFS_NAME = "skyline_theme_prefs"
     private const val KEY_DARK_MODE = "is_dark_mode"
+    private const val KEY_FONT_SCALE = "font_scale_multiplier"
 
     var isDarkModeOverride by mutableStateOf<Boolean?>(null)
+        private set
+        
+    var fontScaleMultiplier by mutableStateOf(1.0f)
         private set
 
     fun init(context: Context) {
@@ -23,6 +27,7 @@ object ThemeController {
         if (prefs.contains(KEY_DARK_MODE)) {
             isDarkModeOverride = prefs.getBoolean(KEY_DARK_MODE, false)
         }
+        fontScaleMultiplier = prefs.getFloat(KEY_FONT_SCALE, 1.0f)
     }
 
     fun toggle(context: Context, currentIsDark: Boolean) {
@@ -39,6 +44,14 @@ object ThemeController {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_DARK_MODE, enabled)
+            .apply()
+    }
+    
+    fun setFontScale(context: Context, scale: Float) {
+        fontScaleMultiplier = scale
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putFloat(KEY_FONT_SCALE, scale)
             .apply()
     }
 }

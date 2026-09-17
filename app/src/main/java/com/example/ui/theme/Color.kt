@@ -5,10 +5,13 @@ import androidx.compose.ui.graphics.Color
 // Skyline Internet Brand Colors
 val SkylineBlue = Color(0xFF0066FF)
 val SkylineBlueDark = Color(0xFF004EC2)
-val SkylineCyan = Color(0xFF00C2FF)
-val SkylineNavyDark = Color(0xFF061126)
-val SkylineSurfaceDark = Color(0xFF0D1E3A)
-val SkylineCardDark = Color(0xFF132749)
+val SkylineCyan = Color(0xFF00C2FF) // Matches the bright cyan in the logo
+val SkylineOrange = Color(0xFFFF8000) // Matches the vibrant orange accent in the logo
+
+// Dark blues based on the new logo's deep navy background
+val SkylineNavyDark = Color(0xFF020C26)
+val SkylineSurfaceDark = Color(0xFF06153A)
+val SkylineCardDark = Color(0xFF0B2155)
 
 val SkylineSuccess = Color(0xFF10B981)
 val SkylineSuccessContainer = Color(0xFFD1FAE5)
@@ -25,8 +28,8 @@ val SkylineLightTextPrimary = Color(0xFF0F172A)
 val SkylineLightTextSecondary = Color(0xFF64748B)
 
 // Dark Theme Palette
-val SkylineDarkBg = Color(0xFF061126)
-val SkylineDarkSurface = Color(0xFF0D1E3A)
-val SkylineDarkBorder = Color(0xFF1E3A5F)
+val SkylineDarkBg = Color(0xFF020C26) // Deep logo background
+val SkylineDarkSurface = Color(0xFF06153A) // Surface
+val SkylineDarkBorder = Color(0xFF153372)
 val SkylineDarkTextPrimary = Color(0xFFF8FAFC)
 val SkylineDarkTextSecondary = Color(0xFF94A3B8)

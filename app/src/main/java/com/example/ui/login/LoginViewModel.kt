@@ -81,6 +81,27 @@ class LoginViewModel(
         }
     }
 
+    fun showError(message: String) {
+        _uiState.value = _uiState.value.copy(errorMessage = message)
+    }
+
+    fun autoLoginNetwork() {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            // Attempt an empty or hotspot specific login via network MAC/IP
+            val result = repository.login("", "")
+            result.onSuccess {
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = null)
+                _events.emit(LoginEvent.LoginSuccess)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "فشل الدخول التلقائي. تأكد من أنك متصل بشبكة (Skyline) أو قم بإدخال بياناتك يدوياً."
+                )
+            }
+        }
+    }
+
     fun autoLogin() {
         if (repository.sessionManager.hasValidSession()) {
             viewModelScope.launch {

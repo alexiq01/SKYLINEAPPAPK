@@ -203,6 +203,26 @@ object NotificationScheduler {
     /**
      * Enqueues an immediate on-demand subscription check via WorkManager.
      */
+    /**
+     * Schedules a support/thank you notification to be shown every 2 days.
+     */
+    fun schedulePeriodicSupportNotification(context: Context) {
+        val workManager = WorkManager.getInstance(context)
+        val constraints = Constraints.Builder().build()
+        val periodicWork = PeriodicWorkRequestBuilder<SupportNotificationWorker>(
+            2, TimeUnit.DAYS
+        )
+            .setInitialDelay(2, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .addTag("periodic_support_notification")
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            "periodic_support_notification",
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicWork
+        )
+    }
+
     fun triggerImmediateCheck(context: Context) {
         val workManager = WorkManager.getInstance(context)
         val oneTimeWork = OneTimeWorkRequestBuilder<SubscriptionCheckWorker>()

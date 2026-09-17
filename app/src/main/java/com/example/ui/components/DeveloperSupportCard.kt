@@ -59,7 +59,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import com.example.ui.theme.SFMonoFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -72,6 +71,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
@@ -112,7 +114,7 @@ fun DeveloperSupportCard(
 
         HapticFeedbackHelper.performCopySuccess(context, haptic)
         isNumberCopied = true
-        onCopied("تم نسخ رقم سوبر كي (4659615480) بنجاح")
+        onCopied("تم نسخ رقم ماستر كارد (4659615480) بنجاح")
 
         scope.launch {
             delay(3000)
@@ -301,7 +303,7 @@ fun DeveloperSupportCard(
 
                         Column {
                             Text(
-                                text = "دعم عبر سوبر كي (SUPER QI)",
+                                text = "دعم عبر ماستر كارد (MasterCard)",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = qiTitle
@@ -344,7 +346,6 @@ fun DeveloperSupportCard(
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 1.5.sp,
-                                    fontFamily = SFMonoFontFamily,
                                     color = qiNumText
                                 )
                             }
@@ -572,6 +573,80 @@ fun DeveloperScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Font Size Configuration
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0xFF14274E) else Color(0xFFF1F5F9)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FormatSize,
+                            contentDescription = "Font Size",
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = "حجم الخط",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "قم بتعديل حجم الخط في التطبيق",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                
+                val currentScale = com.example.ui.theme.ThemeController.fontScaleMultiplier
+                Slider(
+                    value = currentScale,
+                    onValueChange = { newScale ->
+                        com.example.ui.theme.ThemeController.setFontScale(context, newScale)
+                    },
+                    valueRange = 0.8f..1.5f,
+                    steps = 6,
+                    colors = SliderDefaults.colors(
+                        thumbColor = SkylineBlue,
+                        activeTrackColor = SkylineBlue,
+                        inactiveTrackColor = if (isDark) Color(0xFF1E3A5F) else Color(0xFFE2E8F0)
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
         // 3. Detailed Contact Channels (Instagram & WhatsApp) with Clear Data and Icons
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -742,7 +817,6 @@ fun DeveloperScreen(
                                     fontSize = 13.sp,
                                     color = Color(0xFF10B981),
                                     fontWeight = FontWeight.SemiBold,
-                                    fontFamily = SFMonoFontFamily
                                 )
                             }
                         }
@@ -898,7 +972,6 @@ fun SkylineOfficesCard(onCopied: (String) -> Unit, modifier: Modifier = Modifier
                                 fontSize = 13.sp,
                                 color = SkylineBlue,
                                 fontWeight = FontWeight.SemiBold,
-                                fontFamily = SFMonoFontFamily
                             )
                         }
 

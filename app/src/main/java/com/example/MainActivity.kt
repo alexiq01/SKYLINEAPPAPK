@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,22 +34,16 @@ import com.example.ui.login.LoginViewModel
 import com.example.ui.splash.SplashScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.worker.NotificationScheduler
-import com.google.firebase.FirebaseApp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize Firebase
-        FirebaseApp.initializeApp(this)
-        
-        // Prepare Firestore with offline persistence
-        val firestore = FirebaseFirestore.getInstance()
-        val settings = FirebaseFirestoreSettings.Builder()
-            .build()
-        firestore.firestoreSettings = settings
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         AppSecurityEngine.initializeSilently(this)
         com.example.notifications.NotificationInboxManager.init(applicationContext)
@@ -56,11 +52,21 @@ class MainActivity : ComponentActivity() {
 
         // Schedule periodic WorkManager task to monitor subscription expiration dates
         NotificationScheduler.schedulePeriodicSubscriptionCheck(applicationContext)
+        NotificationScheduler.schedulePeriodicSupportNotification(applicationContext)
 
         setContent {
             MyApplicationTheme {
-                // Ensure full Arabic RTL support across all screens
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                val currentDensity = LocalDensity.current
+                val fontScaleMultiplier = com.example.ui.theme.ThemeController.fontScaleMultiplier
+                
+                // Ensure full Arabic RTL support across all screens, and apply user's font scale
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides LayoutDirection.Rtl,
+                    LocalDensity provides Density(
+                        density = currentDensity.density,
+                        fontScale = currentDensity.fontScale * fontScaleMultiplier
+                    )
+                ) {
                     NotificationPermissionHandler()
                     AppNavigation()
                 }

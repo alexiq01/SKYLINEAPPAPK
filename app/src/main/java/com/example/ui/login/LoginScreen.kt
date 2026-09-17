@@ -32,7 +32,9 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -53,6 +55,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.components.SkylineBrandHeader
+import com.example.ui.theme.KatibehFontFamily
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
@@ -89,6 +99,36 @@ fun LoginScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val isDark = isAppInDarkTheme()
+    
+    var showHelpDialog by remember { mutableStateOf(false) }
+
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            title = {
+                Text(
+                    text = "مساعدة في تسجيل الدخول",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "إن لم تستطع الدخول، يمكنك معرفة اسم المستخدم وكلمة المرور الخاصة باشتراكك من قبل الوكيل أو مزود الخدمة.",
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showHelpDialog = false }) {
+                    Text("حسناً", fontWeight = FontWeight.Bold, color = SkylineBlue)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -168,9 +208,9 @@ fun LoginScreen(
                         )
                         Spacer(modifier = Modifier.width(5.dp))
                         Text(
-                            text = "بوابة المشتركين • admin.skylineiq.com",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "بوابة المشتركين • SKYLINE",
+                            fontSize = 20.sp, // Increase size slightly for Katibeh readability
+                            fontFamily = KatibehFontFamily, // Apply Katibeh font here
                             color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1E40AF)
                         )
                     }
@@ -225,29 +265,52 @@ fun LoginScreen(
                             enter = fadeIn(),
                             exit = fadeOut()
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(SkylineError.copy(alpha = 0.12f))
+                                    .background(SkylineError.copy(alpha = 0.08f))
                                     .border(1.dp, SkylineError.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(16.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = SkylineError,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = state.errorMessage.orEmpty(),
-                                    fontSize = 12.sp,
-                                    color = SkylineError,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = SkylineError,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = state.errorMessage.orEmpty(),
+                                        fontSize = 16.sp,
+                                        color = SkylineError,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                
+                                Spacer(modifier = Modifier.height(12.dp))
+                                HorizontalDivider(color = SkylineError.copy(alpha = 0.15f))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = SkylineBlue,
+                                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "أهلاً بك! في حال واجهت مشكلة أو نسيت بياناتك، يمكنك بكل سهولة الحصول على (اسم المستخدم) و (كلمة المرور) من خلال مراجعة الوكيل الخاص باشتراكك (صاحب البرج).",
+                                        fontSize = 16.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        lineHeight = 24.sp
+                                    )
+                                }
                             }
                         }
 
@@ -267,7 +330,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("username_input"),
-                            placeholder = { Text("مثال: bbn.17@haq2", fontSize = 13.sp) },
+                            placeholder = { Text("مثال: ha@haq3", fontSize = 13.sp) },
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
@@ -461,10 +524,20 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(18.dp))
 
                         // Auto-login / Saved Session button with elevated chip look
+                        val locationPermissionLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.RequestPermission()
+                        ) { isGranted: Boolean ->
+                            if (isGranted) {
+                                viewModel.autoLoginNetwork()
+                            } else {
+                                viewModel.showError("يجب تفعيل خيار الموقع (GPS) للتحقق من اتصالك بمزود الخدمة مباشرة.")
+                            }
+                        }
+
                         OutlinedButton(
                             onClick = {
                                 HapticFeedbackHelper.performClick(context, haptic)
-                                viewModel.autoLogin()
+                                locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -481,15 +554,30 @@ fun LoginScreen(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Fingerprint,
+                                imageVector = Icons.Default.WifiTethering,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(R.string.auto_login),
+                                text = "تسجيل الدخول تلقائياً (من الشبكة)",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Help TextButton
+                        TextButton(
+                            onClick = { showHelpDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "هل تواجه مشكلة في تسجيل الدخول؟",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }

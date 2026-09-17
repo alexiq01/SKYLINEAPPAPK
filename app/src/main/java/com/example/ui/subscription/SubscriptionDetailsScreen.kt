@@ -81,7 +81,6 @@ import com.example.data.api.UserAccountData
 import com.example.ui.components.DEVELOPER_WHATSAPP_NUMBER
 import com.example.ui.components.InfoRow
 import com.example.ui.components.StatusBadge
-import com.example.ui.theme.SFMonoFontFamily
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
@@ -545,7 +544,7 @@ fun SubscriptionDetailsScreen(
 
                 InfoRow(label = "اسم الباقة الحالية", value = service?.profileName ?: "2-Nitro", valueColor = SkylineBlue)
                 InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
-                InfoRow(label = stringResource(R.string.username), value = user?.username ?: "bbn.17@haq2")
+                InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
                 InfoRow(
                     label = "تاريخ ووقت الانتهاء",
                     value = NotificationScheduler.formatFullDateTime(expirationDateStr),
@@ -652,7 +651,6 @@ private fun CountdownUnitBox(
                 text = String.format(Locale.US, "%02d", value),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = SFMonoFontFamily,
                 color = highlightColor
             )
             Spacer(modifier = Modifier.height(2.dp))
