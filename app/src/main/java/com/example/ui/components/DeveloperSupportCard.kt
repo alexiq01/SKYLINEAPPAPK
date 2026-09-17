@@ -780,10 +780,164 @@ fun DeveloperScreen(
             }
         }
 
-        // 4. Dedicated Super Qi Support Card
+        // 4. Skyline Offices Card
+        SkylineOfficesCard(onCopied = onCopied)
+
+        // 5. Dedicated Super Qi Support Card
         DeveloperSupportCard(onCopied = onCopied)
 
         Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+/**
+ * Card displaying Skyline offices and contact numbers
+ */
+@Composable
+fun SkylineOfficesCard(onCopied: (String) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val isDark = isAppInDarkTheme()
+
+    fun copyNumber(label: String, number: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        val clip = ClipData.newPlainText(label, number)
+        clipboard?.setPrimaryClip(clip)
+        HapticFeedbackHelper.performCopySuccess(context, haptic)
+        onCopied("تم نسخ رقم $label بنجاح")
+    }
+
+    fun callNumber(number: String) {
+        HapticFeedbackHelper.performClick(context, haptic)
+        try {
+            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            onCopied("تعذر فتح تطبيق الاتصال")
+        }
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) Color(0xFF0C1930) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(SkylineBlue.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Phone,
+                        contentDescription = null,
+                        tint = SkylineBlue,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "أرقام مكاتب ووُكلاء SKYLINE",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val offices = listOf(
+                "مكتب كيثري" to "0772624433",
+                "مكتب حقلانية" to "07821082008",
+                "مكتب بروانة" to "07832829293",
+                "مكتب حديثة" to "07811151184"
+            )
+
+            offices.forEachIndexed { index, office ->
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isDark) Color(0xFF132240) else Color(0xFFF8FAFC),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isDark) SkylineBlue.copy(alpha = 0.15f) else Color(0xFFE2E8F0)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = office.first,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = office.second,
+                                fontSize = 13.sp,
+                                color = SkylineBlue,
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = SFMonoFontFamily
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            IconButton(
+                                onClick = { copyNumber(office.first, office.second) },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "نسخ الرقم",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Button(
+                                onClick = { callNumber(office.second) },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue),
+                                modifier = Modifier.height(36.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Phone,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("اتصال", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+                if (index < offices.size - 1) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
+        }
     }
 }
 
