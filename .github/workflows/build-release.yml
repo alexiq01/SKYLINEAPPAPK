@@ -19,7 +19,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -29,21 +29,43 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
+      - name: Generate debug.keystore
+        run: |
+          keytool -genkeypair \
+            -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Verify keystore
+        run: |
+          echo "Checking debug.keystore..."
+          ls -lh debug.keystore
+          keytool -list \
+            -keystore debug.keystore \
+            -storepass android
+
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Find Release APK
         id: apk
         run: |
-          echo "Searching for Release APK..."
+          echo "Searching for generated APK..."
 
-          APK_PATH=$(find . -type f \
+          APK_PATH=$(find . \
+            -type f \
             -path "*/build/outputs/apk/release/*.apk" \
             | head -n 1)
 
           if [ -z "$APK_PATH" ]; then
-            echo "ERROR: No Release APK was generated."
-            echo "Available APK files:"
+            echo "ERROR: Release APK was not generated."
+            echo "Searching all APK files..."
             find . -type f -name "*.apk" || true
             exit 1
           fi
@@ -53,13 +75,13 @@ jobs:
 
           echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
 
-          echo "APK information:"
+          echo "APK details:"
           ls -lh "$APK_PATH"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: SKYLINE-APK
           path: ${{ steps.apk.outputs.apk_path }}
           if-no-files-found: error
 
@@ -73,3 +95,11 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+هسه سوِّ Commit للـWorkflow وشغّله من "Actions → Android Release CI/CD → Run workflow".
+
+المفروض التسلسل يصير:
+
+"Checkout" → "JDK 17" → "Generate debug.keystore" → "Build Release APK" → "Find Release APK" → "SKYLINE-APK"
+
+إذا ظهر خطأ جديد، دز آخر جزء من الخطأ فقط وأنا أحدد لك الخطوة التالية مباشرة.
