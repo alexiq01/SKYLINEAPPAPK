@@ -38,7 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import com.example.ui.theme.KatibehFontFamily
+import com.example.ui.theme.AppleFontFamily
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -72,43 +72,53 @@ fun SkylineBrandHeader(
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
+                .size(86.dp)
+                .clip(RoundedCornerShape(22.dp))
                 .background(
-                    Brush.radialGradient(
-                        colors = listOf(Color(0xFF00C2FF).copy(alpha = 0.3f), Color(0xFF061126))
-                    )
+                    if (isDark) {
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF1C1C1E), Color(0xFF000000))
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            listOf(Color(0xFFFFFFFF), Color(0xFFF2F2F7))
+                        )
+                    }
                 )
-                .border(2.dp, SkylineCyan.copy(alpha = 0.5f), CircleShape),
+                .border(
+                    1.dp,
+                    if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA),
+                    RoundedCornerShape(22.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = R.drawable.ic_skyline_logo),
                 contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
+                    .size(68.dp)
+                    .clip(RoundedCornerShape(18.dp))
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Text(
             text = stringResource(R.string.app_name),
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            fontFamily = KatibehFontFamily,
-            color = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground,
-            letterSpacing = 0.5.sp
+            color = if (isDark) Color.White else Color(0xFF000000),
+            letterSpacing = (-0.3).sp
         )
 
+        Spacer(modifier = Modifier.height(2.dp))
+
         Text(
-            text = "SKYLINE",
-            fontSize = 13.sp,
+            text = "SKYLINE INTERNET",
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = KatibehFontFamily,
-            color = SkylineCyan,
-            letterSpacing = 4.sp
+            color = SkylineBlue,
+            letterSpacing = 2.sp
         )
     }
 }

@@ -9,113 +9,142 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 
 /**
- * Katibeh FontFamily (Custom Google Font for specific display text)
+ * Apple San Francisco Font Families (SF Pro & SF Arabic)
+ * Provides official Apple typography styling with high legibility for both Arabic and English text.
  */
-val KatibehFontFamily = FontFamily(
-    Font(R.font.katibeh, FontWeight.Normal)
+val SFArabicFontFamily = FontFamily(
+    Font(R.font.sf_arabic_regular, FontWeight.Normal),
+    Font(R.font.sf_arabic_regular, FontWeight.Medium),
+    Font(R.font.sf_arabic_regular, FontWeight.SemiBold),
+    Font(R.font.sf_arabic_regular, FontWeight.Bold)
 )
 
-// Primary default font for the application
-val AppFontFamily = KatibehFontFamily
+val SFProFontFamily = FontFamily(
+    Font(R.font.sf_pro_regular, FontWeight.Normal),
+    Font(R.font.sf_pro_medium, FontWeight.Medium),
+    Font(R.font.sf_pro_bold, FontWeight.SemiBold),
+    Font(R.font.sf_pro_bold, FontWeight.Bold)
+)
 
-// --- Material 3 Typography using Katibeh ---
+val SFMonoFontFamily = FontFamily(
+    Font(R.font.sf_mono_regular, FontWeight.Normal),
+    Font(R.font.sf_mono_bold, FontWeight.Bold)
+)
+
+val NewYorkFontFamily = FontFamily(
+    Font(R.font.new_york_regular, FontWeight.Normal),
+    Font(R.font.new_york_bold, FontWeight.Bold)
+)
+
+// Combined Apple Font for seamless bilingual Arabic + Latin support
+val AppleFontFamily = FontFamily(
+    Font(R.font.sf_arabic_regular, FontWeight.Normal),
+    Font(R.font.sf_pro_regular, FontWeight.Normal),
+    Font(R.font.sf_pro_medium, FontWeight.Medium),
+    Font(R.font.sf_pro_bold, FontWeight.Bold)
+)
+
+// Legacy alias to preserve compatibility while upgrading typography to Apple's design
+val KatibehFontFamily = AppleFontFamily
+val AppFontFamily = AppleFontFamily
+
+// --- Apple iOS Typography Specifications (Clear, prominent, balanced) ---
 val Typography = Typography(
     displayLarge = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 54.sp,
-        lineHeight = 62.sp,
-        letterSpacing = (-0.25).sp
+        fontSize = 38.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-0.4).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 42.sp,
-        lineHeight = 50.sp,
-        letterSpacing = (-0.2).sp
+        fontSize = 32.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-0.3).sp
     ),
     displaySmall = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 34.sp,
-        lineHeight = 42.sp
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
+        letterSpacing = (-0.2).sp
     ),
     headlineLarge = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        lineHeight = 38.sp
+        fontSize = 24.sp,
+        lineHeight = 30.sp,
+        letterSpacing = (-0.15).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 34.sp
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = (-0.1).sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = KatibehFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 30.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
         lineHeight = 26.sp
     ),
+    titleLarge = TextStyle(
+        fontFamily = AppleFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 19.sp,
+        lineHeight = 25.sp
+    ),
     titleMedium = TextStyle(
-        fontFamily = KatibehFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp
+        fontFamily = AppleFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp,
+        lineHeight = 23.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = KatibehFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
+        fontFamily = AppleFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 21.sp
     ),
     bodyLarge = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
+        fontSize = 17.sp,
         lineHeight = 24.sp,
-        letterSpacing = 0.3.sp
+        letterSpacing = (-0.2).sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        letterSpacing = (-0.1).sp
     ),
     bodySmall = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = KatibehFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
+        fontFamily = AppleFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 21.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = KatibehFontFamily,
+        fontFamily = AppleFontFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 12.sp,
+        lineHeight = 16.sp
     )
 )

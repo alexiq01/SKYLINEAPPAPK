@@ -8,11 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = SkylineCyan,
-    onPrimary = Color.Black,
-    primaryContainer = SkylineBlueDark,
+    primary = SkylineBlue,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF004085),
     onPrimaryContainer = Color.White,
-    secondary = SkylineOrange,
+    secondary = SkylineCyan,
     onSecondary = Color.Black,
     tertiary = SkylineSuccess,
     background = SkylineDarkBg,
@@ -28,7 +28,7 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = SkylineBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCEBFF),
+    primaryContainer = Color(0xFFE5F0FF),
     onPrimaryContainer = SkylineBlueDark,
     secondary = SkylineCyan,
     onSecondary = Color.White,
@@ -37,7 +37,7 @@ private val LightColorScheme = lightColorScheme(
     onBackground = SkylineLightTextPrimary,
     surface = SkylineLightSurface,
     onSurface = SkylineLightTextPrimary,
-    surfaceVariant = Color(0xFFF1F5F9),
+    surfaceVariant = Color(0xFFE5E5EA),
     onSurfaceVariant = SkylineLightTextSecondary,
     outline = SkylineLightBorder,
     error = SkylineError
@@ -56,3 +56,4 @@ fun MyApplicationTheme(
         content = content
     )
 }
+

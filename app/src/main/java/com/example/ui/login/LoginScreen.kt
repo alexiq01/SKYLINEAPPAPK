@@ -82,7 +82,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.components.SkylineBrandHeader
-import com.example.ui.theme.KatibehFontFamily
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
@@ -182,57 +181,57 @@ fun LoginScreen(
                 // Server Status Pill Badge
                 Surface(
                     shape = RoundedCornerShape(50.dp),
-                    color = if (isDark) Color(0xFF0F244A) else Color.White,
+                    color = if (isDark) Color(0xFF1C1C1E) else Color(0xFFFFFFFF),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        if (isDark) SkylineCyan.copy(alpha = 0.35f) else SkylineBlue.copy(alpha = 0.2f)
+                        if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
                     ),
                     shadowElevation = 2.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF10B981))
+                                .background(Color(0xFF34C759))
                         )
-                        Spacer(modifier = Modifier.width(7.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.Dns,
                             contentDescription = null,
-                            tint = SkylineCyan,
-                            modifier = Modifier.size(13.dp)
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(15.dp)
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "بوابة المشتركين • SKYLINE",
-                            fontSize = 20.sp, // Increase size slightly for Katibeh readability
-                            fontFamily = KatibehFontFamily, // Apply Katibeh font here
-                            color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1E40AF)
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDark) Color(0xFFFFFFFF) else Color(0xFF000000)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(22.dp))
 
-                // Modern Login Form Card
+                // Modern iOS Login Form Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("login_card"),
-                    shape = RoundedCornerShape(26.dp),
+                    shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDark) Color(0xFF0D1E3A) else Color.White
+                        containerColor = if (isDark) Color(0xFF1C1C1E) else Color.White
                     ),
                     elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (isDark) 4.dp else 6.dp
+                        defaultElevation = if (isDark) 2.dp else 4.dp
                     ),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
+                        if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
                     )
                 ) {
                     Column(
@@ -243,8 +242,8 @@ fun LoginScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.login_title),
-                            fontSize = 21.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
@@ -252,7 +251,7 @@ fun LoginScreen(
 
                         Text(
                             text = "أدخل بيانات اشتراكك للمتابعة وإدارة الباقة والسرعة",
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
@@ -269,9 +268,9 @@ fun LoginScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(16.dp))
                                     .background(SkylineError.copy(alpha = 0.08f))
-                                    .border(1.dp, SkylineError.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                    .border(1.dp, SkylineError.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
                                     .padding(16.dp)
                             ) {
                                 Row(
@@ -306,9 +305,9 @@ fun LoginScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = "أهلاً بك! في حال واجهت مشكلة أو نسيت بياناتك، يمكنك بكل سهولة الحصول على (اسم المستخدم) و (كلمة المرور) من خلال مراجعة الوكيل الخاص باشتراكك (صاحب البرج).",
-                                        fontSize = 16.sp,
+                                        fontSize = 15.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        lineHeight = 24.sp
+                                        lineHeight = 23.sp
                                     )
                                 }
                             }
@@ -317,8 +316,8 @@ fun LoginScreen(
                         // Username Field
                         Text(
                             text = stringResource(R.string.username),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -330,7 +329,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("username_input"),
-                            placeholder = { Text("مثال: ha@haq3", fontSize = 13.sp) },
+                            placeholder = { Text("مثال: ha@haq3", fontSize = 15.sp) },
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
@@ -348,16 +347,16 @@ fun LoginScreen(
                                 }
                             },
                             singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
                                 imeAction = ImeAction.Next
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SkylineBlue,
-                                unfocusedBorderColor = if (isDark) Color(0xFF1E3A5F) else Color(0xFFCBD5E1),
-                                focusedContainerColor = if (isDark) Color(0xFF091428) else Color(0xFFF8FAFC),
-                                unfocusedContainerColor = if (isDark) Color(0xFF091428) else Color(0xFFF8FAFC)
+                                unfocusedBorderColor = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA),
+                                focusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
+                                unfocusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7)
                             )
                         )
 
@@ -366,8 +365,8 @@ fun LoginScreen(
                         // Password Field
                         Text(
                             text = stringResource(R.string.password),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -379,7 +378,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("password_input"),
-                            placeholder = { Text("••••••••", fontSize = 14.sp) },
+                            placeholder = { Text("••••••••", fontSize = 15.sp) },
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
@@ -410,7 +409,7 @@ fun LoginScreen(
                             },
                             visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Done
@@ -424,15 +423,15 @@ fun LoginScreen(
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SkylineBlue,
-                                unfocusedBorderColor = if (isDark) Color(0xFF1E3A5F) else Color(0xFFCBD5E1),
-                                focusedContainerColor = if (isDark) Color(0xFF091428) else Color(0xFFF8FAFC),
-                                unfocusedContainerColor = if (isDark) Color(0xFF091428) else Color(0xFFF8FAFC)
+                                unfocusedBorderColor = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA),
+                                focusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
+                                unfocusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7)
                             )
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Modern Gradient Action Button (Login)
+                        // Apple iOS Primary Action Button (Login)
                         Button(
                             onClick = {
                                 focusManager.clearFocus()
@@ -442,16 +441,16 @@ fun LoginScreen(
                             enabled = !state.isLoading,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(54.dp)
+                                .height(52.dp)
                                 .testTag("login_button"),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = SkylineBlue,
                                 contentColor = Color.White
                             ),
                             elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 4.dp,
-                                pressedElevation = 1.dp
+                                defaultElevation = 2.dp,
+                                pressedElevation = 0.dp
                             )
                         ) {
                             if (state.isLoading) {
@@ -460,7 +459,7 @@ fun LoginScreen(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(20.dp),
                                         color = Color.White,
                                         strokeWidth = 2.5.dp
                                     )
@@ -484,7 +483,7 @@ fun LoginScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = stringResource(R.string.login_button),
-                                        fontSize = 16.sp,
+                                        fontSize = 17.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -500,11 +499,11 @@ fun LoginScreen(
                         ) {
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF1E3A5F) else Color(0xFFE2E8F0)
+                                color = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
                             )
                             Surface(
                                 shape = RoundedCornerShape(50.dp),
-                                color = if (isDark) Color(0xFF091428) else Color(0xFFF1F5F9),
+                                color = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
                                 modifier = Modifier.padding(horizontal = 10.dp)
                             ) {
                                 Text(
@@ -517,13 +516,13 @@ fun LoginScreen(
                             }
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF1E3A5F) else Color(0xFFE2E8F0)
+                                color = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
                             )
                         }
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // Auto-login / Saved Session button with elevated chip look
+                        // Auto-login / Saved Session button with Apple Outline Look
                         val locationPermissionLauncher = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.RequestPermission()
                         ) { isGranted: Boolean ->
@@ -541,28 +540,28 @@ fun LoginScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
+                                .height(50.dp)
                                 .testTag("auto_login_button"),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                if (isDark) SkylineCyan.copy(alpha = 0.5f) else SkylineBlue.copy(alpha = 0.4f)
+                                1.dp,
+                                if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
                             ),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = if (isDark) SkylineCyan else SkylineBlue,
-                                containerColor = if (isDark) Color(0xFF091428).copy(alpha = 0.5f) else Color(0xFFF0F7FF)
+                                contentColor = SkylineBlue,
+                                containerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFFFFFFF)
                             )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.WifiTethering,
                                 contentDescription = null,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "تسجيل الدخول تلقائياً (من الشبكة)",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                         
