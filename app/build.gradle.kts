@@ -119,7 +119,7 @@ dependencies {
   implementation(libs.firebase.ai)
   implementation("com.google.firebase:firebase-analytics")
   // Uncomment to use Firestore:
-  implementation(libs.firebase.firestore)
+  // implementation(libs.firebase.firestore)
   implementation(libs.firebase.config)
   implementation(libs.firebase.messaging)
 
