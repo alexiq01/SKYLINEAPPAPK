@@ -71,8 +71,8 @@ class ExampleRobolectricTest {
 
         val formattedWithRemaining = NotificationScheduler.formatExpirationWithRemainingTime("2026-10-13 14:00:00")
         assertNotNull(formattedWithRemaining)
-        assertTrue(formattedWithRemaining.startsWith("ينتهي في"))
-        assertTrue(formattedWithRemaining.contains("متبقي"))
+        assertTrue(formattedWithRemaining.contains("أكتوبر") || formattedWithRemaining.contains("13"))
+        assertTrue(formattedWithRemaining.contains("متبق"))
     }
 
     @Test

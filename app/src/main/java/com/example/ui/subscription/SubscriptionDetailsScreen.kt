@@ -546,8 +546,8 @@ fun SubscriptionDetailsScreen(
                 InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
                 InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
                 InfoRow(
-                    label = "تاريخ ووقت الانتهاء",
-                    value = NotificationScheduler.formatFullDateTime(expirationDateStr),
+                    label = stringResource(R.string.expiration_date),
+                    value = NotificationScheduler.formatExpirationWithRemainingTime(expirationDateStr),
                     valueColor = if (isExpired) Color(0xFFDC2626) else SkylineBlue
                 )
                 InfoRow(

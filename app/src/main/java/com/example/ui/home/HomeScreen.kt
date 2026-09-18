@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Badge
@@ -44,6 +45,8 @@ import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SystemUpdate
+import com.example.update.UpdateManager
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -227,6 +230,34 @@ fun HomeScreen(
                         fontSize = 13.sp,
                         color = SkylineBlue
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (remainingDays <= 0) Color(0xFFFEE2E2) else SkylineBlue.copy(alpha = 0.12f),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (remainingDays <= 0) Color(0xFFEF4444).copy(alpha = 0.4f) else SkylineBlue.copy(alpha = 0.25f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                tint = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                 }
 
@@ -325,6 +356,30 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.weight(1f))
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(8.dp))
+
+                NavigationDrawerItem(
+                    label = { Text("التحقق من التحديثات") },
+                    selected = false,
+                    icon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = SkylineBlue) },
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        UpdateManager.checkForUpdates(
+                            context = context,
+                            forceImmediateFetch = true,
+                            onNoUpdate = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("أنت تستخدم أحدث إصدار من التطبيق (v${com.example.BuildConfig.VERSION_NAME})")
+                                }
+                            },
+                            onError = { err ->
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("تعذر التحقق من التحديثات: $err")
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
 
                 NavigationDrawerItem(
                     label = { Text("تسجيل الخروج", color = Color.Red) },
@@ -836,6 +891,8 @@ private fun HomeScreenDashboard(
     // 1. Top Plan Header Card with circular gauge & real-time sync status
     MiniPlanHeaderCard(
         planName = service?.profileName ?: "2-Nitro",
+        username = user?.username ?: "ha@haq3",
+        expirationDate = service?.expiration,
         isActive = isSubscriptionActive,
         remainingDays = remainingDays,
         isOnline = isOnline,
@@ -1187,6 +1244,8 @@ private fun HomeScreenDashboard(
 @Composable
 private fun MiniPlanHeaderCard(
     planName: String,
+    username: String? = null,
+    expirationDate: String? = null,
     isActive: Boolean,
     remainingDays: Int,
     isOnline: Boolean = true,
@@ -1221,16 +1280,47 @@ private fun MiniPlanHeaderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = planName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = planName,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        StatusBadge(isActive = isActive)
+                    }
+
                     Spacer(modifier = Modifier.height(6.dp))
-                    StatusBadge(isActive = isActive)
+
+                    Text(
+                        text = "اسم المستخدم: ${username ?: "ha@haq3"}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = SkylineBlue
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = if (remainingDays <= 0) Color(0xFFDC2626) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = NotificationScheduler.formatExpirationWithRemainingTime(expirationDate),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
 
                 CircularDaysGauge(
                     days = remainingDays,

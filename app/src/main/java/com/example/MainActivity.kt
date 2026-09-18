@@ -33,6 +33,8 @@ import com.example.ui.login.LoginScreen
 import com.example.ui.login.LoginViewModel
 import com.example.ui.splash.SplashScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.update.InAppUpdateDialogHost
+import com.example.update.UpdateManager
 import com.example.worker.NotificationScheduler
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -67,8 +69,15 @@ class MainActivity : ComponentActivity() {
                         fontScale = currentDensity.fontScale * fontScaleMultiplier
                     )
                 ) {
+                    val appContext = LocalContext.current.applicationContext
+                    LaunchedEffect(Unit) {
+                        // Check for updates via Firebase Remote Config
+                        UpdateManager.checkForUpdates(appContext)
+                    }
+
                     NotificationPermissionHandler()
                     AppNavigation()
+                    InAppUpdateDialogHost()
                 }
             }
         }
