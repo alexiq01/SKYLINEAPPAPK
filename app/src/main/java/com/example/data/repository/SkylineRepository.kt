@@ -11,9 +11,11 @@ import com.example.data.api.SkylineApiService
 import com.example.data.api.UnifiedSubscription
 import com.example.data.storage.SessionManager
 import com.example.worker.NotificationScheduler
+import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.util.UUID
 
 class SkylineRepository(
@@ -40,7 +42,7 @@ class SkylineRepository(
                 val body = response.body()
                 val token = body?.token
                 if (!token.isNullOrBlank() && (body.status == 200 || body.status == 1 || body.status == null)) {
-                    sessionManager.saveSession(token = token, username = username.trim())
+                    sessionManager.saveSession(token = token, username = username.trim(), password = password)
                     Result.success(token)
                 } else {
                     val msg = body?.message ?: "err_invalid_login"
@@ -59,6 +61,89 @@ class SkylineRepository(
                 } else {
                     Result.failure(Exception("server_error_${response.code()}"))
                 }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Sends a background request to the ISP provider gateway at admin.skylineiq.com/user.
+     * When connected to the provider network (Skyline Wi-Fi), it returns a successful response
+     * and automatically logs the user into their dashboard.
+     */
+    suspend fun checkProviderConnectionAndAutoLogin(): Result<String> = withContext(Dispatchers.IO) {
+        // 1. If user already has stored credentials, attempt direct login with saved credentials first
+        val savedUser = sessionManager.getUsername()
+        val savedPass = sessionManager.getPassword()
+        if (!savedUser.isNullOrBlank() && !savedPass.isNullOrBlank()) {
+            val savedLoginRes = login(savedUser, savedPass)
+            if (savedLoginRes.isSuccess) {
+                return@withContext savedLoginRes
+            }
+        }
+
+        // 2. Perform background request to provider gateway: http://admin.skylineiq.com/user
+        try {
+            val request = Request.Builder()
+                .url("http://admin.skylineiq.com/user")
+                .header("User-Agent", "Mozilla/5.0 (Linux; Android 14; Mobile; SkylineApp)")
+                .header("Accept", "application/json, text/html, */*")
+                .get()
+                .build()
+
+            val response = ApiClient.okHttpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val responseBodyStr = response.body?.string().orEmpty()
+
+                // Check if response is JSON with token or user data
+                if (responseBodyStr.trim().startsWith("{")) {
+                    try {
+                        val json = ApiClient.gson.fromJson(responseBodyStr, JsonObject::class.java)
+                        val token = if (json.has("token")) json.get("token").asString else null
+                        val status = if (json.has("status")) json.get("status").asInt else 200
+                        val username = if (json.has("username")) json.get("username").asString
+                                      else if (json.has("user")) json.get("user").asString
+                                      else "مشترك سكايلان"
+
+                        if (!token.isNullOrBlank() && (status == 200 || status == 1)) {
+                            sessionManager.saveSession(token = token, username = username)
+                            return@withContext Result.success(token)
+                        }
+                    } catch (_: Exception) {}
+                }
+
+                // Check API user endpoint for active hotspot/provider session
+                val apiRequest = Request.Builder()
+                    .url("http://admin.skylineiq.com/user/api/index.php/api/user")
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 14; Mobile; SkylineApp)")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+
+                val apiResponse = ApiClient.okHttpClient.newCall(apiRequest).execute()
+                if (apiResponse.isSuccessful) {
+                    val apiBodyStr = apiResponse.body?.string().orEmpty()
+                    if (apiBodyStr.contains("\"data\"") || apiBodyStr.contains("\"username\"") || apiBodyStr.contains("\"id\"")) {
+                        val sessionToken = "provider_session_${UUID.randomUUID()}"
+                        sessionManager.saveSession(token = sessionToken, username = "مشترك الشبكة")
+                        return@withContext Result.success(sessionToken)
+                    }
+                }
+
+                // If provider gateway returns authenticated subscriber page without barrier
+                if (responseBodyStr.contains("dashboard", ignoreCase = true) || 
+                    responseBodyStr.contains("لوحة المشترك") || 
+                    responseBodyStr.contains("معلومات الحساب")
+                ) {
+                    val sessionToken = "provider_session_${UUID.randomUUID()}"
+                    sessionManager.saveSession(token = sessionToken, username = "مشترك سكايلان")
+                    return@withContext Result.success(sessionToken)
+                }
+
+                Result.failure(Exception("not_connected_to_provider"))
+            } else {
+                Result.failure(Exception("provider_status_${response.code}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

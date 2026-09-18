@@ -53,30 +53,31 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         /**
-         * Asynchronously fetches the current FCM registration token if Google Play Services is available.
+         * Asynchronously and safely fetches the current FCM registration token.
          */
         fun fetchFcmToken(context: Context? = null, onTokenReceived: ((String) -> Unit)? = null) {
             try {
                 if (context != null) {
-                    val gms = com.google.android.gms.common.GoogleApiAvailability.getInstance()
-                    val resultCode = gms.isGooglePlayServicesAvailable(context)
+                    val availability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+                    val resultCode = availability.isGooglePlayServicesAvailable(context)
                     if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
-                        Log.d(TAG, "Google Play Services not ready for FCM registration (code: $resultCode)")
+                        Log.i(TAG, "Google Play Services not ready or not available on this device (code: $resultCode). FCM token check skipped.")
                         return
                     }
                 }
+
                 FirebaseMessaging.getInstance().token
                     .addOnCompleteListener { task ->
-                        if (task.isSuccessful && task.result != null) {
+                        if (task.isSuccessful && !task.result.isNullOrBlank()) {
                             val token = task.result
                             Log.d(TAG, "Current FCM Token: $token")
                             onTokenReceived?.invoke(token)
                         } else {
-                            Log.d(TAG, "FCM token not available in current environment: ${task.exception?.message}")
+                            Log.i(TAG, "FCM token not available in this environment: ${task.exception?.message}")
                         }
                     }
             } catch (e: Throwable) {
-                Log.d(TAG, "FCM token check skipped: ${e.message}")
+                Log.w(TAG, "FCM token check skipped safely: ${e.message}")
             }
         }
     }
@@ -92,7 +93,6 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d(TAG, "FCM Registration Token generated: $token")
-        // Save or sync token if required
     }
 
     /**

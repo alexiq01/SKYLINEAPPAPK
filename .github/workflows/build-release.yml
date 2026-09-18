@@ -1,18 +1,22 @@
-name: Android Release CI/CD
+name: Build and Release Android APK
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+      - master
     tags:
-      - "v*"
+      - 'v*'
+  release:
+    types: [published, created]
 
 permissions:
   contents: write
 
 jobs:
   build-release:
+    name: Build Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -22,84 +26,69 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: gradle
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./gradlew
 
-      - name: Generate debug.keystore
+      - name: Setup Keystore for Signing
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          keytool -genkeypair \
-            -v \
-            -keystore debug.keystore \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding custom release keystore from GitHub Secrets..."
+            echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/release.keystore"
+            echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/release.keystore" >> $GITHUB_ENV
+            echo "STORE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
+          elif [ -f "debug.keystore.base64" ]; then
+            echo "Decoding local debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          else
+            echo "Generating fallback keystore..."
+            keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          fi
 
-      - name: Verify keystore
-        run: |
-          echo "Checking debug.keystore..."
-          ls -lh debug.keystore
-          keytool -list \
-            -keystore debug.keystore \
-            -storepass android
+      - name: Build Release APK with Gradle
+        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Find Release APK
+      - name: Verify and Prepare Release Asset
         id: apk
         run: |
-          echo "Searching for generated APK..."
-
-          APK_PATH=$(find . \
-            -type f \
-            -path "*/build/outputs/apk/release/*.apk" \
-            | head -n 1)
-
+          mkdir -p release-output
+          APK_PATH=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             echo "ERROR: Release APK was not generated."
-            echo "Searching all APK files..."
             find . -type f -name "*.apk" || true
             exit 1
           fi
+          echo "Found APK at: $APK_PATH"
+          cp "$APK_PATH" release-output/app-release.apk
+          ls -lh release-output/app-release.apk
+          echo "apk_path=release-output/app-release.apk" >> "$GITHUB_OUTPUT"
 
-          echo "APK found:"
-          echo "$APK_PATH"
-
-          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
-
-          echo "APK details:"
-          ls -lh "$APK_PATH"
-
-      - name: Upload APK Artifact
+      - name: Upload APK as GitHub Action Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SKYLINE-APK
-          path: ${{ steps.apk.outputs.apk_path }}
+          name: app-release
+          path: release-output/app-release.apk
           if-no-files-found: error
+          retention-days: 30
 
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.apk.outputs.apk_path }}
+          files: release-output/app-release.apk
           generate_release_notes: true
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-هسه سوِّ Commit للـWorkflow وشغّله من "Actions → Android Release CI/CD → Run workflow".
-
-المفروض التسلسل يصير:
-
-"Checkout" → "JDK 17" → "Generate debug.keystore" → "Build Release APK" → "Find Release APK" → "SKYLINE-APK"
-
-إذا ظهر خطأ جديد، دز آخر جزء من الخطأ فقط وأنا أحدد لك الخطوة التالية مباشرة.

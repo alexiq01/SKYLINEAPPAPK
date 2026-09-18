@@ -53,14 +53,18 @@ class SessionManager(context: Context) {
     companion object {
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_USERNAME = "saved_username"
+        private const val KEY_PASSWORD = "saved_password"
         private const val KEY_CACHED_DATA = "cached_subscription_json"
         private const val KEY_LAST_UPDATE = "last_update_millis"
     }
 
-    fun saveSession(token: String, username: String) {
+    fun saveSession(token: String, username: String, password: String? = null) {
         safeEdit { editor ->
             editor.putString(KEY_TOKEN, token)
             editor.putString(KEY_USERNAME, username)
+            if (!password.isNullOrBlank()) {
+                editor.putString(KEY_PASSWORD, password)
+            }
         }
     }
 
@@ -72,9 +76,19 @@ class SessionManager(context: Context) {
         return safeGet { it.getString(KEY_USERNAME, null) }
     }
 
+    fun getPassword(): String? {
+        return safeGet { it.getString(KEY_PASSWORD, null) }
+    }
+
     fun hasValidSession(): Boolean {
         val token = getToken()
         return !token.isNullOrBlank()
+    }
+
+    fun hasSavedCredentials(): Boolean {
+        val user = getUsername()
+        val pass = getPassword()
+        return !user.isNullOrBlank() && !pass.isNullOrBlank()
     }
 
     fun saveCache(subscription: UnifiedSubscription) {
@@ -96,11 +110,15 @@ class SessionManager(context: Context) {
         }
     }
 
-    fun clearSession() {
+    fun clearSession(clearSavedCredentials: Boolean = false) {
         safeEdit { editor ->
             editor.remove(KEY_TOKEN)
             editor.remove(KEY_CACHED_DATA)
             editor.remove(KEY_LAST_UPDATE)
+            if (clearSavedCredentials) {
+                editor.remove(KEY_USERNAME)
+                editor.remove(KEY_PASSWORD)
+            }
         }
     }
 }

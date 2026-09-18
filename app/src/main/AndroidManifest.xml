@@ -33,10 +33,31 @@
             </intent-filter>
         </activity>
 
-        <!-- Disable automatic background FCM retry loop to prevent hard failure logs in test emulators -->
+        <!-- Firebase Cloud Messaging Configurations -->
         <meta-data
             android:name="firebase_messaging_auto_init_enabled"
-            android:value="false" />
+            android:value="false"
+            tools:replace="android:value" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="skyline_push_notifications" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notification" />
+
+        <!-- Disable automatic FirebaseMessaging background component startup to prevent topic sync crashes on non-GMS devices -->
+        <service
+            android:name="com.google.firebase.components.ComponentDiscoveryService"
+            tools:node="merge">
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+                tools:node="remove" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+                tools:node="remove" />
+        </service>
 
         <!-- Firebase Cloud Messaging Service -->
         <service

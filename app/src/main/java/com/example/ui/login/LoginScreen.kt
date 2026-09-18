@@ -1,10 +1,10 @@
 package com.example.ui.login
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,17 +24,16 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiTethering
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -55,22 +54,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -81,7 +78,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.components.SkylineBrandHeader
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
@@ -98,36 +94,8 @@ fun LoginScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val isDark = isAppInDarkTheme()
-    
-    var showHelpDialog by remember { mutableStateOf(false) }
 
-    if (showHelpDialog) {
-        AlertDialog(
-            onDismissRequest = { showHelpDialog = false },
-            title = {
-                Text(
-                    text = "مساعدة في تسجيل الدخول",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Text(
-                    text = "إن لم تستطع الدخول، يمكنك معرفة اسم المستخدم وكلمة المرور الخاصة باشتراكك من قبل الوكيل أو مزود الخدمة.",
-                    fontSize = 14.sp,
-                    lineHeight = 22.sp
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showHelpDialog = false }) {
-                    Text("حسناً", fontWeight = FontWeight.Bold, color = SkylineBlue)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    var showHelpDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -135,6 +103,136 @@ fun LoginScreen(
                 is LoginEvent.LoginSuccess -> onLoginSuccess()
             }
         }
+    }
+
+    // Native Failure / Error Dialog Popup (نافذة منبثقة لرسائل الخطأ)
+    if (state.showDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissDialog() },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .background(SkylineError.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ErrorOutline,
+                        contentDescription = null,
+                        tint = SkylineError,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = state.dialogTitle,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = state.dialogMessage,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        HapticFeedbackHelper.performClick(context, haptic)
+                        viewModel.dismissDialog()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
+                ) {
+                    Text(
+                        text = "حسناً، فهمت",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Color.White
+                    )
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = if (isDark) Color(0xFF1E2638) else Color.White,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    // Help & Support Information Dialog
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .background(SkylineBlue.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.HelpOutline,
+                        contentDescription = null,
+                        tint = SkylineBlue,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "مساعدة في تسجيل الدخول",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "• إذا كنت لا تعرف اسم المستخدم أو كلمة المرور، يرجى مراجعة وكيل الإنترنت المزود للخدمة (صاحب البرج).",
+                        fontSize = 14.sp,
+                        lineHeight = 22.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "• للدخول التلقائي: تأكد من اتصال هاتفك بشبكة واي فاي Skyline ليتم التعرف على اشتراكك مباشرة بدون كلمة مرور.",
+                        fontSize = 14.sp,
+                        lineHeight = 22.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showHelpDialog = false },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
+                ) {
+                    Text("إغلاق", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = if (isDark) Color(0xFF1E2638) else Color.White
+        )
     }
 
     Scaffold(
@@ -149,17 +247,21 @@ fun LoginScreen(
                 .background(
                     if (isDark) {
                         Brush.verticalGradient(
-                            0.0f to Color(0xFF040A18),
-                            0.35f to Color(0xFF0A1835),
-                            0.75f to Color(0xFF061126),
-                            1.0f to Color(0xFF030814)
+                            listOf(
+                                Color(0xFF030712),
+                                Color(0xFF0B132B),
+                                Color(0xFF0F1A3A),
+                                Color(0xFF070B18)
+                            )
                         )
                     } else {
                         Brush.verticalGradient(
-                            0.0f to Color(0xFFE0EDFF),
-                            0.25f to Color(0xFFF0F5FD),
-                            0.70f to Color(0xFFF7FAFF),
-                            1.0f to Color(0xFFE8F1FC)
+                            listOf(
+                                Color(0xFFEEF4FF),
+                                Color(0xFFF6F9FF),
+                                Color(0xFFFFFFFF),
+                                Color(0xFFF1F5FB)
+                            )
                         )
                     }
                 )
@@ -168,195 +270,120 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 22.dp, vertical = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Skyline Logo and Brand Crest
-                SkylineBrandHeader()
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Server Status Pill Badge
-                Surface(
-                    shape = RoundedCornerShape(50.dp),
-                    color = if (isDark) Color(0xFF1C1C1E) else Color(0xFFFFFFFF),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
-                    ),
-                    shadowElevation = 2.dp
+                // Native Brand Icon & App Title
+                Box(
+                    modifier = Modifier
+                        .size(92.dp)
+                        .shadow(12.dp, RoundedCornerShape(26.dp), spotColor = SkylineBlue.copy(alpha = 0.5f))
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(
+                            if (isDark) Color(0xFF161F36) else Color.White
+                        )
+                        .border(
+                            1.5.dp,
+                            if (isDark) SkylineCyan.copy(alpha = 0.3f) else SkylineBlue.copy(alpha = 0.2f),
+                            RoundedCornerShape(26.dp)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF34C759))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Default.Dns,
-                            contentDescription = null,
-                            tint = SkylineBlue,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "بوابة المشتركين • SKYLINE",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isDark) Color(0xFFFFFFFF) else Color(0xFF000000)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_skyline_logo),
+                        contentDescription = stringResource(R.string.app_name),
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                // Modern iOS Login Form Card
-                Card(
+                Text(
+                    text = "سكايلان العراق",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (isDark) Color.White else Color(0xFF0A1C3E),
+                    letterSpacing = 0.5.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "بوابة إدارة الاشتراكات والخدمات",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Modern Native Form Container (No awkward web-card look)
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("login_card"),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isDark) Color(0xFF1C1C1E) else Color.White
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (isDark) 2.dp else 4.dp
-                    ),
+                        .testTag("login_form_surface"),
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (isDark) Color(0xFF131D33) else Color.White,
+                    shadowElevation = if (isDark) 4.dp else 8.dp,
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
+                        if (isDark) Color(0xFF223152) else Color(0xFFE2E8F0)
                     )
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(22.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.login_title),
-                            fontSize = 22.sp,
+                            text = "تسجيل الدخول",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = "أدخل بيانات اشتراكك للمتابعة وإدارة الباقة والسرعة",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Error Banner with Smooth Animation
-                        AnimatedVisibility(
-                            visible = !state.errorMessage.isNullOrBlank(),
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(SkylineError.copy(alpha = 0.08f))
-                                    .border(1.dp, SkylineError.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                                    .padding(16.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Warning,
-                                        contentDescription = null,
-                                        tint = SkylineError,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text(
-                                        text = state.errorMessage.orEmpty(),
-                                        fontSize = 16.sp,
-                                        color = SkylineError,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                
-                                Spacer(modifier = Modifier.height(12.dp))
-                                HorizontalDivider(color = SkylineError.copy(alpha = 0.15f))
-                                Spacer(modifier = Modifier.height(12.dp))
-                                
-                                Row(verticalAlignment = Alignment.Top) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        tint = SkylineBlue,
-                                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text(
-                                        text = "أهلاً بك! في حال واجهت مشكلة أو نسيت بياناتك، يمكنك بكل سهولة الحصول على (اسم المستخدم) و (كلمة المرور) من خلال مراجعة الوكيل الخاص باشتراكك (صاحب البرج).",
-                                        fontSize = 15.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        lineHeight = 23.sp
-                                    )
-                                }
-                            }
-                        }
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         // Username Field
                         Text(
-                            text = stringResource(R.string.username),
-                            fontSize = 14.sp,
+                            text = "اسم المستخدم",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 6.dp)
                         )
+
                         OutlinedTextField(
                             value = state.username,
                             onValueChange = viewModel::onUsernameChange,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("username_input"),
-                            placeholder = { Text("مثال: ha@haq3", fontSize = 15.sp) },
+                            placeholder = { Text("أدخل اسم المستخدم", fontSize = 14.sp) },
                             leadingIcon = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(SkylineBlue.copy(alpha = 0.1f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = stringResource(R.string.username),
-                                        tint = SkylineBlue,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = SkylineBlue,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             },
                             singleLine = true,
                             shape = RoundedCornerShape(14.dp),
                             keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Email,
+                                keyboardType = KeyboardType.Text,
                                 imeAction = ImeAction.Next
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SkylineBlue,
-                                unfocusedBorderColor = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA),
-                                focusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
-                                unfocusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7)
+                                unfocusedBorderColor = if (isDark) Color(0xFF2E3D5E) else Color(0xFFCBD5E1),
+                                focusedContainerColor = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC),
+                                unfocusedContainerColor = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC)
                             )
                         )
 
@@ -364,36 +391,27 @@ fun LoginScreen(
 
                         // Password Field
                         Text(
-                            text = stringResource(R.string.password),
-                            fontSize = 14.sp,
+                            text = "كلمة المرور",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 6.dp)
                         )
+
                         OutlinedTextField(
                             value = state.password,
                             onValueChange = viewModel::onPasswordChange,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("password_input"),
-                            placeholder = { Text("••••••••", fontSize = 15.sp) },
+                            placeholder = { Text("••••••••", fontSize = 14.sp) },
                             leadingIcon = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(SkylineBlue.copy(alpha = 0.1f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Lock,
-                                        contentDescription = stringResource(R.string.password),
-                                        tint = SkylineBlue,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = null,
+                                    tint = SkylineBlue,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             },
                             trailingIcon = {
                                 IconButton(onClick = {
@@ -423,15 +441,15 @@ fun LoginScreen(
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SkylineBlue,
-                                unfocusedBorderColor = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA),
-                                focusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
-                                unfocusedContainerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7)
+                                unfocusedBorderColor = if (isDark) Color(0xFF2E3D5E) else Color(0xFFCBD5E1),
+                                focusedContainerColor = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC),
+                                unfocusedContainerColor = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC)
                             )
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Apple iOS Primary Action Button (Login)
+                        // Primary Action Button (Login)
                         Button(
                             onClick = {
                                 focusManager.clearFocus()
@@ -448,10 +466,7 @@ fun LoginScreen(
                                 containerColor = SkylineBlue,
                                 contentColor = Color.White
                             ),
-                            elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 2.dp,
-                                pressedElevation = 0.dp
-                            )
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                         ) {
                             if (state.isLoading) {
                                 Row(
@@ -465,7 +480,7 @@ fun LoginScreen(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = "جاري التحقق من الحساب...",
+                                        text = "جاري التحقق...",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -475,81 +490,67 @@ fun LoginScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Wifi,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
+                                    Text(
+                                        text = "تسجيل الدخول",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = stringResource(R.string.login_button),
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowForward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        // "أو" Divider with refined styling
+                        // Divider
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
+                                color = if (isDark) Color(0xFF223152) else Color(0xFFE2E8F0)
                             )
-                            Surface(
-                                shape = RoundedCornerShape(50.dp),
-                                color = if (isDark) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
-                                modifier = Modifier.padding(horizontal = 10.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.or),
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Text(
+                                text = "أو",
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
+                                color = if (isDark) Color(0xFF223152) else Color(0xFFE2E8F0)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        // Auto-login / Saved Session button with Apple Outline Look
-                        val locationPermissionLauncher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.RequestPermission()
-                        ) { isGranted: Boolean ->
-                            if (isGranted) {
-                                viewModel.autoLoginNetwork()
-                            } else {
-                                viewModel.showError("يجب تفعيل خيار الموقع (GPS) للتحقق من اتصالك بمزود الخدمة مباشرة.")
-                            }
-                        }
-
+                        // Auto-Login Button (Direct Network / Stored Login)
                         OutlinedButton(
                             onClick = {
+                                focusManager.clearFocus()
                                 HapticFeedbackHelper.performClick(context, haptic)
-                                locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                viewModel.autoLoginNetwork()
                             },
+                            enabled = !state.isLoading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
                                 .testTag("auto_login_button"),
                             shape = RoundedCornerShape(14.dp),
                             border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (isDark) Color(0xFF38383A) else Color(0xFFE5E5EA)
+                                1.2.dp,
+                                SkylineBlue.copy(alpha = 0.4f)
                             ),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = SkylineBlue,
-                                containerColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFFFFFFF)
+                                containerColor = if (isDark) Color(0xFF16233F) else Color(0xFFF1F6FF)
                             )
                         ) {
                             Icon(
@@ -559,32 +560,43 @@ fun LoginScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "تسجيل الدخول تلقائياً (من الشبكة)",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Help TextButton
-                        TextButton(
-                            onClick = { showHelpDialog = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "هل تواجه مشكلة في تسجيل الدخول؟",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
+                                text = if (state.hasSavedCredentials) "دخول تلقائي سريع (بيانات محفوظة)" else "تسجيل الدخول التلقائي (من الشبكة)",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Help Action Link
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showHelpDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.HelpOutline,
+                        contentDescription = null,
+                        tint = SkylineBlue,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "هل تواجه مشكلة في تسجيل الدخول؟ اضغط هنا للمساعدة",
+                        fontSize = 13.sp,
+                        color = SkylineBlue,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
+
 
