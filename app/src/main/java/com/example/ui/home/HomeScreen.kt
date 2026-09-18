@@ -119,6 +119,9 @@ import com.example.ui.components.DeveloperScreen
 import com.example.ui.components.DeveloperSupportCard
 import android.content.Intent
 import android.net.Uri
+import com.example.ui.components.AGENT_RESELLER_PHONE_NUMBER
+import com.example.ui.components.AGENT_RESELLER_WHATSAPP_NUMBER
+import com.example.ui.components.AGENT_RESELLER_WHATSAPP_URL
 import com.example.ui.components.DEVELOPER_WHATSAPP_NUMBER
 import com.example.ui.components.DEVELOPER_WHATSAPP_URL
 import com.example.ui.components.InfoRow
@@ -748,33 +751,64 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Contact Agent Button directly in Renew Dialog
-                    Button(
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            try {
-                                val msg = "مرحباً، أود تفعيل وتجديد اشتراك خدمة الإنترنت Skyline الخاصة بي.\nاسم المستخدم: ${user?.username ?: ""}"
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
-                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                }
-                                context.startActivity(intent)
-                            } catch (_: Exception) {
-                                scope.launch { snackbarHostState.showSnackbar("تعذر فتح تطبيق واتساب") }
-                            }
-                        },
+                    // Contact Agent Button directly in Renew Dialog (WhatsApp & Call)
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
-                        shape = RoundedCornerShape(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_whatsapp),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("تواصل مع الوكيل للتفعيل عبر واتساب", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Button(
+                            onClick = {
+                                HapticFeedbackHelper.performClick(context, haptic)
+                                try {
+                                    val msg = "مرحباً، أود تفعيل وتجديد اشتراك خدمة الإنترنت Skyline الخاصة بي.\nاسم المستخدم: ${user?.username ?: ""}"
+                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                        data = Uri.parse("https://wa.me/${AGENT_RESELLER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                    scope.launch { snackbarHostState.showSnackbar("تعذر فتح تطبيق واتساب") }
+                                }
+                            },
+                            modifier = Modifier.weight(1.2f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_whatsapp),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("واتساب الوكيل", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                HapticFeedbackHelper.performClick(context, haptic)
+                                try {
+                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$AGENT_RESELLER_PHONE_NUMBER")).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                    scope.launch { snackbarHostState.showSnackbar("تعذر إجراء المكالمة") }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = null,
+                                tint = SkylineBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("اتصال ($AGENT_RESELLER_PHONE_NUMBER)", fontSize = 11.sp, color = SkylineBlue, fontWeight = FontWeight.Bold)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -957,7 +991,7 @@ private fun HomeScreenDashboard(
                             try {
                                 val msg = "مرحباً، لقد انتهى اشتراكي وأود تفعيله عبر الوكيل.\nاسم المستخدم: ${user?.username ?: ""}"
                                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                                    data = Uri.parse("https://wa.me/${AGENT_RESELLER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
                                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                 }
                                 context.startActivity(intent)

@@ -104,46 +104,54 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = stringResource(R.string.app_name),
+                text = "SKYLINE",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
-                letterSpacing = 1.sp
+                letterSpacing = 2.sp
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "SKYLINE",
-                fontSize = 14.sp,
+                text = "INTERNET SERVICES",
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = SkylineCyan,
-                letterSpacing = 6.sp
+                letterSpacing = 4.sp
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "كل تفاصيل اشتراكك .. في مكان واحد",
+                text = "بوابة إدارة الاشتراكات والخدمات",
                 fontSize = 14.sp,
                 color = Color(0xFF94A3B8),
-                fontWeight = FontWeight.Normal
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(56.dp))
 
-            CircularProgressIndicator(
-                modifier = Modifier.size(36.dp),
-                color = SkylineCyan,
-                strokeWidth = 3.dp
-            )
+            // Elegant Loading Indicator with Glow
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(52.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(44.dp),
+                    color = SkylineCyan,
+                    strokeWidth = 3.5.dp,
+                    trackColor = SkylineCyan.copy(alpha = 0.15f)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "جاري التحميل ...",
+                text = "جاري التحميل وتهيئة الاتصال ...",
                 fontSize = 13.sp,
-                color = Color(0xFF64748B)
+                color = Color(0xFF94A3B8),
+                fontWeight = FontWeight.Medium
             )
         }
     }

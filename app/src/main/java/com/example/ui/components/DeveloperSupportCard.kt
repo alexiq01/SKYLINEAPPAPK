@@ -92,6 +92,11 @@ const val DEVELOPER_WHATSAPP_NUMBER = "+9647830528876"
 const val DEVELOPER_WHATSAPP_URL = "https://wa.me/9647830528876"
 const val DEVELOPER_SUPER_QI_NUMBER = "4659615480"
 
+// Agent & Reseller Contact Info for Subscription Renewal & User Support
+const val AGENT_RESELLER_PHONE_NUMBER = "07821082008"
+const val AGENT_RESELLER_WHATSAPP_NUMBER = "+9647821082008"
+const val AGENT_RESELLER_WHATSAPP_URL = "https://wa.me/9647821082008"
+
 /**
  * Developer and App Support Card
  * Includes Instagram, WhatsApp, and Copyable Super Qi number for donations/support.

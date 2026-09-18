@@ -33,6 +33,8 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
         const val CHANNEL_ID = "skyline_push_notifications"
         const val CHANNEL_NAME = "إشعارات سكايلان العامة والتحديثات"
 
+        val TOPICS = listOf("all", "all_users", "news", "updates", "skyline", "subscribers")
+
         /**
          * Safely creates the notification channel for Android 8.0+
          */
@@ -47,8 +49,47 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
                     description = "قناة مخصصة لإشعارات التطبيق السحابية والتنبيهات"
                     enableLights(true)
                     enableVibration(true)
+                    setShowBadge(true)
                 }
                 notificationManager.createNotificationChannel(channel)
+            }
+        }
+
+        /**
+         * Safely initializes FCM and subscribes to standard broadcast topics
+         */
+        fun initAndSubscribeTopics(context: Context? = null) {
+            try {
+                if (context != null) {
+                    val availability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+                    val resultCode = availability.isGooglePlayServicesAvailable(context)
+                    if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                        Log.i(TAG, "Google Play Services not ready (code: $resultCode). FCM deferred.")
+                        return
+                    }
+                }
+
+                FirebaseMessaging.getInstance().isAutoInitEnabled = true
+
+                // Subscribe to standard topics
+                TOPICS.forEach { topic ->
+                    try {
+                        FirebaseMessaging.getInstance().subscribeToTopic(topic)
+                            .addOnSuccessListener {
+                                Log.d(TAG, "Successfully subscribed to topic: $topic")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.w(TAG, "Failed to subscribe to topic $topic: ${e.message}")
+                            }
+                    } catch (te: Throwable) {
+                        Log.w(TAG, "Error subscribing to topic $topic: ${te.message}")
+                    }
+                }
+
+                // Fetch token
+                fetchFcmToken(context)
+            } catch (e: Throwable) {
+                Log.w(TAG, "FCM init skipped safely: ${e.message}")
             }
         }
 
@@ -61,7 +102,7 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
                     val availability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
                     val resultCode = availability.isGooglePlayServicesAvailable(context)
                     if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
-                        Log.i(TAG, "Google Play Services not ready or not available on this device (code: $resultCode). FCM token check skipped.")
+                        Log.i(TAG, "Google Play Services not ready (code: $resultCode). FCM token check skipped.")
                         return
                     }
                 }
@@ -93,6 +134,15 @@ class SkylineFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d(TAG, "FCM Registration Token generated: $token")
+        if (token.isNotBlank()) {
+            TOPICS.forEach { topic ->
+                try {
+                    FirebaseMessaging.getInstance().subscribeToTopic(topic)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "Could not subscribe to topic $topic: ${e.message}")
+                }
+            }
+        }
     }
 
     /**

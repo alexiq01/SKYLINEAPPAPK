@@ -205,13 +205,13 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "• إذا كنت لا تعرف اسم المستخدم أو كلمة المرور، يرجى مراجعة وكيل الإنترنت المزود للخدمة (صاحب البرج).",
+                        text = "• إذا كنت لا تعرف اسم المستخدم أو كلمة المرور، يرجى مراجعة وكيل الإنترنت المزود للخدمة على الرقم: 07821082008",
                         fontSize = 14.sp,
                         lineHeight = 22.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "• للدخول التلقائي: تأكد من اتصال هاتفك بشبكة واي فاي Skyline ليتم التعرف على اشتراكك مباشرة بدون كلمة مرور.",
+                        text = "• تأكد من إدخال اسم المستخدم وكلمة المرور بشكل صحيح كما تم تزويدك بها من قِبل الوكيل.",
                         fontSize = 14.sp,
                         lineHeight = 22.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -304,20 +304,21 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 Text(
-                    text = "سكايلان العراق",
-                    fontSize = 26.sp,
+                    text = "SKYLINE",
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = if (isDark) Color.White else Color(0xFF0A1C3E),
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 1.sp
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "بوابة إدارة الاشتراكات والخدمات",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                    text = "INTERNET SERVICES",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SkylineBlue,
+                    letterSpacing = 2.sp
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -503,67 +504,6 @@ fun LoginScreen(
                                     )
                                 }
                             }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Divider
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF223152) else Color(0xFFE2E8F0)
-                            )
-                            Text(
-                                text = "أو",
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = if (isDark) Color(0xFF223152) else Color(0xFFE2E8F0)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Auto-Login Button (Direct Network / Stored Login)
-                        OutlinedButton(
-                            onClick = {
-                                focusManager.clearFocus()
-                                HapticFeedbackHelper.performClick(context, haptic)
-                                viewModel.autoLoginNetwork()
-                            },
-                            enabled = !state.isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                                .testTag("auto_login_button"),
-                            shape = RoundedCornerShape(14.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.2.dp,
-                                SkylineBlue.copy(alpha = 0.4f)
-                            ),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = SkylineBlue,
-                                containerColor = if (isDark) Color(0xFF16233F) else Color(0xFFF1F6FF)
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.WifiTethering,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (state.hasSavedCredentials) "دخول تلقائي سريع (بيانات محفوظة)" else "تسجيل الدخول التلقائي (من الشبكة)",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
                 }

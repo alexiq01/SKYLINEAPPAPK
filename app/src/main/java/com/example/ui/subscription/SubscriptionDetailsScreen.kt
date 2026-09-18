@@ -78,7 +78,8 @@ import com.example.R
 import com.example.data.api.DashboardData
 import com.example.data.api.ServiceData
 import com.example.data.api.UserAccountData
-import com.example.ui.components.DEVELOPER_WHATSAPP_NUMBER
+import com.example.ui.components.AGENT_RESELLER_PHONE_NUMBER
+import com.example.ui.components.AGENT_RESELLER_WHATSAPP_NUMBER
 import com.example.ui.components.InfoRow
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.SkylineBlue
@@ -581,7 +582,7 @@ fun SubscriptionDetailsScreen(
                     try {
                         val msg = "مرحباً، أود الاستفسار عن اشتراكي وتجديده عبر الوكيل.\nاسم المستخدم: ${user?.username ?: ""}\nالباقة: ${service?.profileName ?: "2-Nitro"}"
                         val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                            data = Uri.parse("https://wa.me/${AGENT_RESELLER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
                         context.startActivity(intent)

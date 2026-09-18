@@ -17,10 +17,10 @@ class SkylineApplication : Application() {
         try {
             FirebaseApp.initializeApp(this)
             
-            // Check Google Play Services before touching FirebaseMessaging
+            // Check Google Play Services before initializing FCM
             val isGmsAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS
             if (isGmsAvailable) {
-                FirebaseMessaging.getInstance().isAutoInitEnabled = true
+                SkylineFirebaseMessagingService.initAndSubscribeTopics(this)
             } else {
                 // If GMS is not active (such as browser emulator), clear lingering topic queues to prevent background sync errors
                 try {
