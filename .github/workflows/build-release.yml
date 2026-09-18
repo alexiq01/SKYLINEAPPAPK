@@ -6,7 +6,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -19,118 +19,55 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
           cache: gradle
 
-      - name: Grant execute permission for gradlew
+      - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Build Signed Release APK
+      - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
-        env:
-          KEYSTORE_PATH: release.jks
-          KEYSTORE_PASSWORD: angela123
-          KEY_ALIAS: angela-key
-          KEY_PASSWORD: angela123
 
-      - name: Verify Signed APK Generation
-        id: verify_apk
+      - name: Find Release APK
+        id: apk
         run: |
-          echo "Searching for generated signed release APK..."
-          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          
+          echo "Searching for Release APK..."
+
+          APK_PATH=$(find . -type f \
+            -path "*/build/outputs/apk/release/*.apk" \
+            | head -n 1)
+
           if [ -z "$APK_PATH" ]; then
-            echo "ERROR: Signed Release APK was not generated."
+            echo "ERROR: No Release APK was generated."
+            echo "Available APK files:"
+            find . -type f -name "*.apk" || true
             exit 1
           fi
-          
-          echo "Found Signed APK: $APK_PATH"
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-          
-          echo "--- Signed APK Details ---"
+
+          echo "APK found:"
+          echo "$APK_PATH"
+
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+
+          echo "APK information:"
           ls -lh "$APK_PATH"
-          echo "Size: $(du -sh "$APK_PATH" | cut -f1)"
-          echo "-------------------------"
 
-      - name: Upload Signed APK to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-signed-release-apk
-          path: ${{ steps.verify_apk.outputs.apk_path }}
-
-      - name: Create GitHub Release and Attach Signed APK
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ steps.verify_apk.outputs.apk_path }}
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x ./gradlew
-
-      - name: Prepare Signing Keystore (Optional Secrets)
-        shell: bash
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Decoding release keystore from GitHub Secrets..."
-            echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/release.keystore"
-            echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/release.keystore" >> $GITHUB_ENV
-            echo "STORE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
-            echo "KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
-          else
-            echo "No custom release keystore secret provided. Using standard build signing configuration."
-          fi
-
-      - name: Build Release APK with Gradle
-        env:
-          ORG_GRADLE_PROJECT_android.injected.signing.store.file: ${{ env.KEYSTORE_PATH }}
-          STORE_PASSWORD: ${{ env.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ env.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
-        run: |
-          ./gradlew :app:assembleRelease --stacktrace --no-daemon
-
-      - name: Verify and Prepare Release Asset
-        run: |
-          mkdir -p release-output
-          # Locate built release APK and copy it to release-output/app-release.apk
-          APK_FILE=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$APK_FILE" ]; then
-            echo "Error: Release APK was not found!"
-            exit 1
-          fi
-          echo "Found APK at: $APK_FILE"
-          cp "$APK_FILE" release-output/app-release.apk
-          ls -lh release-output/
-
-      - name: Upload APK as GitHub Action Artifact
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: release-output/app-release.apk
-          retention-days: 30
+          path: ${{ steps.apk.outputs.apk_path }}
+          if-no-files-found: error
 
-      - name: Upload APK to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: release-output/app-release.apk
+          files: ${{ steps.apk.outputs.apk_path }}
           generate_release_notes: true
           draft: false
           prerelease: false
