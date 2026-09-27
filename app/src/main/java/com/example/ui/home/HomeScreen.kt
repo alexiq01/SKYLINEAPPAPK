@@ -1247,19 +1247,6 @@ private fun HomeScreenDashboard(
                 value = if (isServiceOnline) "متصل بالخدمة" else "غير متصل",
                 valueColor = if (isServiceOnline) SkylineSuccess else Color.Gray
             )
-            val speedDisplay = if (!service?.downloadLimit.isNullOrBlank()) {
-                "${service?.downloadLimit} / ${service?.uploadLimit ?: "10M"}"
-            } else {
-                service?.description ?: "30 Mbps / 10 Mbps"
-            }
-            InfoRow(
-                label = "سرعة الخدمة",
-                value = speedDisplay
-            )
-            InfoRow(
-                label = stringResource(R.string.static_ip),
-                value = user?.staticIp ?: "10.20.30.45"
-            )
             if (!user?.phone.isNullOrBlank()) {
                 InfoRow(
                     label = stringResource(R.string.phone),
@@ -1667,6 +1654,36 @@ private fun NotificationsTabScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("تجربة إشعار متبقي 3 أيام الآن", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                HapticFeedbackHelper.performClick(context, haptic)
+                                NotificationScheduler.sendSubscriptionRenewedNotification(
+                                    context = context,
+                                    planName = service?.profileName,
+                                    newExpirationDate = expirationDateStr
+                                )
+                                onShowMessage("تم إرسال إشعار (تم التفعيل بنجاح! استمتع بجودة الإنترنت)")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp)
+                                .testTag("btn_test_renewal_notification"),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = SkylineSuccess),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineSuccess)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = SkylineSuccess,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("تجربة إشعار التفعيل والتجديد", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SkylineSuccess)
                         }
                     }
                 }

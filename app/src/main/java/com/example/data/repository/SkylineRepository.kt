@@ -19,7 +19,7 @@ import okhttp3.Request
 import java.util.UUID
 
 class SkylineRepository(
-    private val context: Context,
+    val context: Context,
     private val apiService: SkylineApiService = ApiClient.apiService,
     val sessionManager: SessionManager = SessionManager(context)
 ) {
@@ -219,6 +219,7 @@ class SkylineRepository(
             service?.expiration?.let { exp ->
                 NotificationScheduler.scheduleSubscriptionAlerts(context, exp)
                 NotificationScheduler.schedulePeriodicSubscriptionCheck(context)
+                NotificationScheduler.checkAndTriggerRenewalNotificationIfNeeded(context, exp, service.profileName)
             }
 
             Result.success(unified)
@@ -240,6 +241,8 @@ class SkylineRepository(
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 if (body.status == 200 || body.status == 1 || body.status == null) {
+                    // Send renewal notification immediately
+                    NotificationScheduler.sendSubscriptionRenewedNotification(context)
                     Result.success(body)
                 } else {
                     Result.failure(Exception(body.message ?: "err_redeem_failed"))

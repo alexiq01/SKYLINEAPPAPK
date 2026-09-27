@@ -1,8 +1,5 @@
 package com.example.ui.login
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,7 +29,6 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -44,11 +40,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -61,7 +55,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,8 +84,6 @@ import com.example.ui.theme.SkylineCyan
 import com.example.ui.theme.SkylineError
 import com.example.ui.theme.isAppInDarkTheme
 import com.example.ui.util.HapticFeedbackHelper
-import com.example.ui.util.LocationHelper
-import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -106,35 +97,6 @@ fun LoginScreen(
     val isDark = isAppInDarkTheme()
 
     var showHelpDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
-    // GPS & Location Permission Launcher for Auto-Login
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        coroutineScope.launch {
-            val coords = LocationHelper.getLastKnownOrCurrentLocation(context)
-            viewModel.loginWithGps(coords?.latitude, coords?.longitude)
-        }
-    }
-
-    val triggerGpsAutoLogin: () -> Unit = {
-        focusManager.clearFocus()
-        HapticFeedbackHelper.performClick(context, haptic)
-        if (LocationHelper.hasLocationPermission(context)) {
-            coroutineScope.launch {
-                val coords = LocationHelper.getLastKnownOrCurrentLocation(context)
-                viewModel.loginWithGps(coords?.latitude, coords?.longitude)
-            }
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -512,90 +474,6 @@ fun LoginScreen(
                                         imageVector = Icons.Default.ArrowForward,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Divider with "أو"
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                            )
-                            Text(
-                                text = "أو",
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Secondary Auto-Login with GPS & Provider link Button
-                        OutlinedButton(
-                            onClick = triggerGpsAutoLogin,
-                            enabled = !state.isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                                .testTag("btn_auto_login_gps"),
-                            shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                Brush.horizontalGradient(listOf(SkylineBlue, SkylineCyan))
-                            ),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (isDark) SkylineBlue.copy(alpha = 0.12f) else SkylineBlue.copy(alpha = 0.06f),
-                                contentColor = SkylineBlue
-                            )
-                        ) {
-                            if (state.isLoading && state.loadingMessage != "جاري التحقق...") {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = SkylineBlue,
-                                        strokeWidth = 2.5.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text(
-                                        text = state.loadingMessage,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = SkylineBlue
-                                    )
-                                }
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.MyLocation,
-                                        contentDescription = null,
-                                        tint = SkylineBlue,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "تسجيل تلقائي (تفعيل GPS والشبكة)",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = SkylineBlue
                                     )
                                 }
                             }

@@ -48,6 +48,13 @@ class SubscriptionCheckWorker(
 
                     Log.d(TAG, "Checking expiration: $expirationStr, diffMillis=$diff")
 
+                    // Check if subscription has been renewed / extended and trigger renewal notification
+                    NotificationScheduler.checkAndTriggerRenewalNotificationIfNeeded(
+                        context = context,
+                        newExpirationStr = expirationStr,
+                        planName = subscription?.service?.profileName
+                    )
+
                     // Schedule precise one-time workers (3-day, 24h, 1h, expired)
                     NotificationScheduler.scheduleSubscriptionAlerts(context, expirationStr)
 

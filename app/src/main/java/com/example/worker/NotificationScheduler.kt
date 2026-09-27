@@ -1,7 +1,11 @@
 package com.example.worker
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.media.RingtoneManager
+import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -9,6 +13,9 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.MainActivity
+import com.example.R
+import com.example.notifications.NotificationInboxManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -21,6 +28,8 @@ object NotificationScheduler {
     private const val PREFS_NAME = "skyline_notification_prefs"
     private const val KEY_LAST_3D_NOTIFIED_DATE = "last_notified_3d_exp_date"
     private const val KEY_LAST_EXPIRED_NOTIFIED_DATE = "last_notified_expired_exp_date"
+    private const val KEY_LAST_KNOWN_EXP_MILLIS = "last_known_exp_millis"
+    private const val KEY_LAST_KNOWN_WAS_EXPIRED = "last_known_was_expired"
 
     private val patternList = listOf(
         "yyyy-MM-dd HH:mm:ss",
@@ -242,6 +251,119 @@ object NotificationScheduler {
             Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3))
         )
         ExpirationNotificationWorker.sendNotification(context, alertType, displayDate)
+    }
+
+    /**
+     * Sends local notification and inbox entry when subscription is renewed/reactivated.
+     * Message: "تم التفعيل بنجاح! استمتع بجودة الإنترنت فائقة السرعة."
+     */
+    fun sendSubscriptionRenewedNotification(
+        context: Context,
+        planName: String? = null,
+        newExpirationDate: String? = null
+    ) {
+        try {
+            NotificationInboxManager.init(context)
+            NotificationInboxManager.createNotificationChannel(context)
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                ?: return
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                2001,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val title = "تم تفعيل الاشتراك بنجاح 🎉"
+            val message = "تم التفعيل بنجاح! استمتع بجودة الإنترنت فائقة السرعة."
+            val extraInfo = if (!planName.isNullOrBlank() || !newExpirationDate.isNullOrBlank()) {
+                val planText = if (!planName.isNullOrBlank()) "الباقة: $planName" else ""
+                val dateText = if (!newExpirationDate.isNullOrBlank()) "ينتهي في: $newExpirationDate" else ""
+                listOf(planText, dateText).filter { it.isNotBlank() }.joinToString(" • ")
+            } else ""
+
+            val fullBody = if (extraInfo.isNotBlank()) "$message\n$extraInfo" else message
+
+            val largeIconBitmap = try {
+                android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_skyline_logo)
+            } catch (_: Exception) {
+                null
+            }
+
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+            val builder = NotificationCompat.Builder(context, NotificationInboxManager.CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_notification)
+                .apply {
+                    if (largeIconBitmap != null) {
+                        setLargeIcon(largeIconBitmap)
+                    }
+                }
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(fullBody))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setSound(soundUri)
+                .setVibrate(longArrayOf(0, 250, 150, 250))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+
+            notificationManager.notify(2001, builder.build())
+
+            // Record in Notification Inbox
+            NotificationInboxManager.addNotification(
+                context = context,
+                title = title,
+                message = fullBody,
+                type = "renewed"
+            )
+        } catch (_: Exception) {}
+    }
+
+    /**
+     * Checks if the subscription was previously expired or extended, and triggers the renewed notification.
+     */
+    fun checkAndTriggerRenewalNotificationIfNeeded(
+        context: Context,
+        newExpirationStr: String?,
+        planName: String? = null
+    ) {
+        if (newExpirationStr.isNullOrBlank()) return
+        val newMillis = parseDateToMillis(newExpirationStr) ?: return
+        val now = System.currentTimeMillis()
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val lastMillis = prefs.getLong(KEY_LAST_KNOWN_EXP_MILLIS, 0L)
+        val wasExpired = prefs.getBoolean(KEY_LAST_KNOWN_WAS_EXPIRED, false)
+
+        val isNowActive = newMillis > now
+
+        if (isNowActive) {
+            // If it was expired before and now renewed, or the new expiration date is extended by more than 1 day
+            val isExtended = lastMillis > 0 && newMillis > (lastMillis + TimeUnit.DAYS.toMillis(1))
+            if (wasExpired || isExtended) {
+                sendSubscriptionRenewedNotification(
+                    context = context,
+                    planName = planName,
+                    newExpirationDate = newExpirationStr
+                )
+            }
+            prefs.edit()
+                .putLong(KEY_LAST_KNOWN_EXP_MILLIS, newMillis)
+                .putBoolean(KEY_LAST_KNOWN_WAS_EXPIRED, false)
+                .apply()
+        } else {
+            // Currently expired
+            prefs.edit()
+                .putLong(KEY_LAST_KNOWN_EXP_MILLIS, newMillis)
+                .putBoolean(KEY_LAST_KNOWN_WAS_EXPIRED, true)
+                .apply()
+        }
     }
 
     /**

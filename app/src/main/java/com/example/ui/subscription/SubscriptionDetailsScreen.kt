@@ -540,10 +540,6 @@ fun SubscriptionDetailsScreen(
                     valueColor = if (isExpired) Color(0xFFDC2626) else SkylineBlue
                 )
                 InfoRow(
-                    label = "السرعة / حد التحميل",
-                    value = service?.downloadLimit ?: "غير محدد"
-                )
-                InfoRow(
                     label = "سعر الاشتراك",
                     value = "IQD ${String.format(Locale.US, "%,.0f", planPrice)}"
                 )
@@ -551,7 +547,6 @@ fun SubscriptionDetailsScreen(
                     label = "التجديد التلقائي",
                     value = if (user?.autoRenew == 1) "مفعل تلقائياً" else "معطل"
                 )
-                InfoRow(label = "الآيبي الثابت (Static IP)", value = user?.staticIp ?: "--")
                 InfoRow(label = "رقم العقد", value = user?.contractId ?: "300285")
                 InfoRow(label = "الشركة المزودة", value = user?.company ?: "Skyline Internet")
             }

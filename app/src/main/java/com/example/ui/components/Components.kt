@@ -417,7 +417,7 @@ fun IPhone17DynamicIsland(
                             }
                         }
 
-                        // Plan & Speed Capsule
+                        // Plan & Status Capsule
                         Box(
                             modifier = Modifier
                                 .weight(1.3f)
@@ -437,7 +437,7 @@ fun IPhone17DynamicIsland(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = if (isOnline) "IP: ${ipAddress.ifBlank { "متصل" }}" else "غير متصل بالشبكة",
+                                    text = if (isOnline) "الخدمة نشطة" else "غير متصل بالشبكة",
                                     fontSize = 10.5.sp,
                                     color = if (isOnline) SkylineOnline else Color(0xFF94A3B8),
                                     maxLines = 1
@@ -848,7 +848,7 @@ fun IPhoneControlCenterGrid(
                         glowColor = Color(0xFF00C6FF)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Speed,
+                            imageVector = Icons.Default.CardMembership,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(19.dp)
