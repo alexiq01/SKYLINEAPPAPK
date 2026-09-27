@@ -46,10 +46,31 @@ object NotificationInboxManager {
 
     private var isInitialized = false
 
+    const val CHANNEL_ID = "skyline_subscription_alerts"
+    const val CHANNEL_NAME = "إشعارات سكايلان العامة والتحديثات"
+
     fun init(context: Context) {
         if (!isInitialized) {
+            createNotificationChannel(context)
             _notificationsFlow.value = loadFromStorage(context)
             isInitialized = true
+        }
+    }
+
+    fun createNotificationChannel(context: Context) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            val channel = android.app.NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "قناة مخصصة لإشعارات التطبيق السحابية والتنبيهات"
+                enableLights(true)
+                enableVibration(true)
+                setShowBadge(true)
+            }
+            notificationManager?.createNotificationChannel(channel)
         }
     }
 

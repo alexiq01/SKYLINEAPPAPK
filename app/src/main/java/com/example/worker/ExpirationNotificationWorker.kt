@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import android.net.Uri
 import androidx.core.app.NotificationCompat
@@ -35,30 +37,43 @@ class ExpirationNotificationWorker(
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                    .build()
+
                 val channel = NotificationChannel(
                     CHANNEL_ID,
                     context.getString(R.string.notification_channel_name),
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = context.getString(R.string.notification_channel_desc)
+                    enableLights(true)
+                    lightColor = android.graphics.Color.BLUE
                     enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 300, 200, 300)
+                    setSound(soundUri, audioAttributes)
+                    setShowBadge(true)
                 }
                 notificationManager.createNotificationChannel(channel)
             }
 
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("navigate_to", "home")
+                putExtra("alert_type", alertType)
             }
             val pendingIntent = PendingIntent.getActivity(
                 context,
-                0,
+                (System.currentTimeMillis() % 10000).toInt(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val title = context.getString(R.string.app_name)
+            val title = "تنبيه اشتراك Skyline"
             val message = when (alertType) {
-                ALERT_3D -> context.getString(R.string.notification_expiring_3d)
+                ALERT_3D -> "متبقي 3 أيام فقط على انتهاء اشتراكك في خدمة الإنترنت! يرجى تجديد الاشتراك لتجنب انقطاع الخدمة."
                 ALERT_24H -> context.getString(R.string.notification_expiring_24h)
                 ALERT_1H -> context.getString(R.string.notification_expiring_1h)
                 else -> context.getString(R.string.notification_expired)
@@ -81,6 +96,8 @@ class ExpirationNotificationWorker(
                 "\n${context.getString(R.string.expiration_date)}: $expirationDate"
             } else ""
 
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .apply {
@@ -92,28 +109,35 @@ class ExpirationNotificationWorker(
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$message$displayDate"))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setSound(soundUri)
+                .setVibrate(longArrayOf(0, 300, 200, 300))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
 
-            // When expired, add an actionable button to directly contact the agent via WhatsApp to activate
-            if (alertType == ALERT_EXPIRED) {
-                val whatsappIntent = Intent(Intent.ACTION_VIEW).apply {
-                    val encodedMsg = Uri.encode("مرحباً، انتهى اشتراكي في خدمة Skyline وأود تفعيل وتجديد الاشتراك.")
-                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=$encodedMsg")
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            // Direct WhatsApp action button for quick renewal
+            val whatsappIntent = Intent(Intent.ACTION_VIEW).apply {
+                val encodedMsg = if (alertType == ALERT_3D) {
+                    Uri.encode("مرحباً، متبقي 3 أيام على انتهاء اشتراكي في خدمة Skyline وأود تجديد الاشتراك.")
+                } else if (alertType == ALERT_EXPIRED) {
+                    Uri.encode("مرحباً، انتهى اشتراكي في خدمة Skyline وأود تفعيل وتجديد الاشتراك.")
+                } else {
+                    Uri.encode("مرحباً، أود الاستفسار عن تجديد اشتراكي في خدمة Skyline.")
                 }
-                val whatsappPendingIntent = PendingIntent.getActivity(
-                    context,
-                    1005,
-                    whatsappIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                builder.addAction(
-                    R.drawable.ic_stat_notification,
-                    context.getString(R.string.notification_action_contact_agent),
-                    whatsappPendingIntent
-                )
+                data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=$encodedMsg")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
+            val whatsappPendingIntent = PendingIntent.getActivity(
+                context,
+                1005,
+                whatsappIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(
+                R.drawable.ic_stat_notification,
+                context.getString(R.string.notification_action_contact_agent),
+                whatsappPendingIntent
+            )
 
             notificationManager.notify(notificationId, builder.build())
 

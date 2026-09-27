@@ -81,6 +81,7 @@ import com.example.data.api.UserAccountData
 import com.example.ui.components.AGENT_RESELLER_PHONE_NUMBER
 import com.example.ui.components.AGENT_RESELLER_WHATSAPP_NUMBER
 import com.example.ui.components.InfoRow
+import com.example.ui.components.LiquidGlassCard
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.SkylineBlue
 import com.example.ui.theme.SkylineCyan
@@ -159,22 +160,14 @@ fun SubscriptionDetailsScreen(
             .testTag("screen_subscription_details")
             .padding(bottom = 24.dp)
     ) {
-        // 1. Hero Countdown Card
-        Card(
+        // 1. Hero Countdown Liquid Glass Card
+        LiquidGlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("card_expiration_countdown"),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0F1E36) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            border = BorderStroke(
-                1.dp,
-                if (isExpired) Color(0xFFEF4444).copy(alpha = 0.6f)
-                else if (isExpiringSoon) Color(0xFFF59E0B).copy(alpha = 0.5f)
-                else SkylineBlue.copy(alpha = 0.25f)
-            )
+            shape = RoundedCornerShape(26.dp),
+            isDark = isDark,
+            elevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -340,17 +333,14 @@ fun SubscriptionDetailsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. Remaining Balance & Progress Indicator Card
-        Card(
+        // 2. Remaining Balance & Progress Indicator Liquid Glass Card
+        LiquidGlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("card_balance_progress"),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0F1E36) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            border = BorderStroke(1.dp, SkylineCyan.copy(alpha = 0.25f))
+            shape = RoundedCornerShape(26.dp),
+            isDark = isDark,
+            elevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -504,16 +494,14 @@ fun SubscriptionDetailsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Full Subscription & Package Details Card
-        Card(
+        // 3. Full Subscription & Package Details Liquid Glass Card
+        LiquidGlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("card_full_subscription_details"),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0F1E36) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(26.dp),
+            isDark = isDark,
+            elevation = 6.dp
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(

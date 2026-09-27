@@ -1,6 +1,15 @@
 package com.example.ui.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,7 +62,12 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.ui.components.AppleAmbientBackground
 import com.example.ui.components.DeveloperScreen
+import com.example.ui.components.IPhone17DynamicIsland
+import com.example.ui.components.IPhoneControlCenterGrid
+import com.example.ui.components.IPhoneFloatingDock
+import com.example.ui.components.LiquidGlassCard
 import com.example.ui.theme.ThemeController
 import com.example.ui.theme.isAppInDarkTheme
 import com.example.ui.util.HapticFeedbackHelper
@@ -500,101 +514,23 @@ fun HomeScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = if (isDark) Color(0xF2071120) else Color(0xEBFFFFFF)
                     )
                 )
             },
             bottomBar = {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp
-                ) {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            selectedTab = 0
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
-                        label = { Text("الرئيسية", fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = SkylineBlue,
-                            selectedTextColor = SkylineBlue,
-                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
-                        ),
-                        modifier = Modifier.testTag("nav_item_home")
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            selectedTab = 1
-                        },
-                        icon = { Icon(Icons.Default.CardMembership, contentDescription = "الاشتراك") },
-                        label = { Text("الاشتراك", fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = SkylineBlue,
-                            selectedTextColor = SkylineBlue,
-                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
-                        ),
-                        modifier = Modifier.testTag("nav_item_subscription")
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            selectedTab = 2
-                        },
-                        icon = { Icon(Icons.Default.Notifications, contentDescription = "الإشعارات") },
-                        label = { Text("الإشعارات", fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = SkylineBlue,
-                            selectedTextColor = SkylineBlue,
-                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
-                        ),
-                        modifier = Modifier.testTag("nav_item_notifications")
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = {
-                            HapticFeedbackHelper.performClick(context, haptic)
-                            selectedTab = 3
-                        },
-                        icon = { Icon(Icons.Default.Code, contentDescription = "المطور") },
-                        label = { Text("المطور", fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = SkylineBlue,
-                            selectedTextColor = SkylineBlue,
-                            indicatorColor = SkylineBlue.copy(alpha = 0.12f)
-                        ),
-                        modifier = Modifier.testTag("nav_item_developer")
-                    )
-                }
+                IPhoneFloatingDock(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    unreadNotificationsCount = 2
+                )
             }
         ) { innerPadding ->
-            Box(
+            AppleAmbientBackground(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .then(
-                        if (isDark) {
-                            Modifier.background(
-                                Brush.verticalGradient(
-                                    0.0f to Color(0xFF061126),
-                                    0.35f to Color(0xFF0B1932),
-                                    1.0f to Color(0xFF061126)
-                                )
-                            )
-                        } else {
-                            Modifier.background(
-                                Brush.verticalGradient(
-                                    0.0f to Color(0xFFEBF2FD),
-                                    0.30f to Color(0xFFF4F7FC),
-                                    1.0f to Color(0xFFEDF2FA)
-                                )
-                            )
-                        }
-                    )
+                    .padding(innerPadding),
+                isDark = isDark
             ) {
                 if (state.isLoading && state.subscription == null) {
                     Box(
@@ -623,17 +559,16 @@ fun HomeScreen(
                     ) {
                         // Offline notice
                         AnimatedVisibility(visible = state.isOfflineMode) {
-                            Card(
+                            LiquidGlassCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 12.dp)
                                     .testTag("offline_banner"),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFDE68A))
+                                shape = RoundedCornerShape(16.dp),
+                                isDark = isDark
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(12.dp),
+                                    modifier = Modifier.padding(14.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
@@ -653,71 +588,105 @@ fun HomeScreen(
                             }
                         }
 
-                        when (selectedTab) {
-                            0 -> {
-                                HomeScreenDashboard(
-                                    user = user,
-                                    service = service,
-                                    dashboard = dashboard,
-                                    remainingDays = remainingDays,
-                                    isServiceOnline = isServiceOnline,
-                                    isSubscriptionActive = isSubscriptionActive,
-                                    isOnline = isDataOnline,
-                                    isRefreshing = state.isRefreshing,
-                                    lastUpdatedFormatted = state.lastUpdatedFormatted,
-                                    onRefresh = { viewModel.loadData(isRefresh = true) },
-                                    onRenew = { showRenewDialog = true },
-                                    onNavigateToSubscription = { selectedTab = 1 }
-                                )
-                            }
-                            1 -> {
-                                SubscriptionDetailsScreen(
-                                    user = user,
-                                    service = service,
-                                    dashboard = dashboard,
-                                    remainingDays = remainingDays,
-                                    isServiceOnline = isServiceOnline,
-                                    isSubscriptionActive = isSubscriptionActive,
-                                    onBack = { selectedTab = 0 },
-                                    onRenew = { showRenewDialog = true },
-                                    onRefresh = { viewModel.loadData(isRefresh = true) }
-                                )
-                            }
-                            2 -> {
-                                NotificationsTabScreen(
-                                    user = user,
-                                    dashboard = dashboard,
-                                    service = service,
-                                    remainingDays = remainingDays,
-                                    onShowMessage = { msg ->
-                                        scope.launch { snackbarHostState.showSnackbar(msg) }
-                                    }
-                                )
-                            }
-                            3 -> {
-                                DeveloperScreen(
-                                    onCopied = { msg ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(msg)
+                        AnimatedContent(
+                            targetState = selectedTab,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    (slideInHorizontally(
+                                        initialOffsetX = { fullWidth -> fullWidth },
+                                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = 0.85f)
+                                    ) + fadeIn(animationSpec = tween(280))).togetherWith(
+                                        slideOutHorizontally(
+                                            targetOffsetX = { fullWidth -> -fullWidth / 3 },
+                                            animationSpec = tween(260)
+                                        ) + fadeOut(animationSpec = tween(200))
+                                    )
+                                } else {
+                                    (slideInHorizontally(
+                                        initialOffsetX = { fullWidth -> -fullWidth },
+                                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = 0.85f)
+                                    ) + fadeIn(animationSpec = tween(280))).togetherWith(
+                                        slideOutHorizontally(
+                                            targetOffsetX = { fullWidth -> fullWidth / 3 },
+                                            animationSpec = tween(260)
+                                        ) + fadeOut(animationSpec = tween(200))
+                                    )
+                                }
+                            },
+                            label = "tab_page_transition"
+                        ) { currentTab ->
+                            when (currentTab) {
+                                0 -> {
+                                    HomeScreenDashboard(
+                                        user = user,
+                                        service = service,
+                                        dashboard = dashboard,
+                                        remainingDays = remainingDays,
+                                        isServiceOnline = isServiceOnline,
+                                        isSubscriptionActive = isSubscriptionActive,
+                                        isOnline = isDataOnline,
+                                        isRefreshing = state.isRefreshing,
+                                        lastUpdatedFormatted = state.lastUpdatedFormatted,
+                                        onRefresh = { viewModel.loadData(isRefresh = true) },
+                                        onRenew = { showRenewDialog = true },
+                                        onNavigateToSubscription = { selectedTab = 1 },
+                                        onShowMessage = { msg ->
+                                            scope.launch { snackbarHostState.showSnackbar(msg) }
                                         }
-                                    }
-                                )
-                            }
-                            else -> {
-                                HomeScreenDashboard(
-                                    user = user,
-                                    service = service,
-                                    dashboard = dashboard,
-                                    remainingDays = remainingDays,
-                                    isServiceOnline = isServiceOnline,
-                                    isSubscriptionActive = isSubscriptionActive,
-                                    isOnline = isDataOnline,
-                                    isRefreshing = state.isRefreshing,
-                                    lastUpdatedFormatted = state.lastUpdatedFormatted,
-                                    onRefresh = { viewModel.loadData(isRefresh = true) },
-                                    onRenew = { showRenewDialog = true },
-                                    onNavigateToSubscription = { selectedTab = 1 }
-                                )
+                                    )
+                                }
+                                1 -> {
+                                    SubscriptionDetailsScreen(
+                                        user = user,
+                                        service = service,
+                                        dashboard = dashboard,
+                                        remainingDays = remainingDays,
+                                        isServiceOnline = isServiceOnline,
+                                        isSubscriptionActive = isSubscriptionActive,
+                                        onBack = { selectedTab = 0 },
+                                        onRenew = { showRenewDialog = true },
+                                        onRefresh = { viewModel.loadData(isRefresh = true) }
+                                    )
+                                }
+                                2 -> {
+                                    NotificationsTabScreen(
+                                        user = user,
+                                        dashboard = dashboard,
+                                        service = service,
+                                        remainingDays = remainingDays,
+                                        onShowMessage = { msg ->
+                                            scope.launch { snackbarHostState.showSnackbar(msg) }
+                                        }
+                                    )
+                                }
+                                3 -> {
+                                    DeveloperScreen(
+                                        onCopied = { msg ->
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(msg)
+                                            }
+                                        }
+                                    )
+                                }
+                                else -> {
+                                    HomeScreenDashboard(
+                                        user = user,
+                                        service = service,
+                                        dashboard = dashboard,
+                                        remainingDays = remainingDays,
+                                        isServiceOnline = isServiceOnline,
+                                        isSubscriptionActive = isSubscriptionActive,
+                                        isOnline = isDataOnline,
+                                        isRefreshing = state.isRefreshing,
+                                        lastUpdatedFormatted = state.lastUpdatedFormatted,
+                                        onRefresh = { viewModel.loadData(isRefresh = true) },
+                                        onRenew = { showRenewDialog = true },
+                                        onNavigateToSubscription = { selectedTab = 1 },
+                                        onShowMessage = { msg ->
+                                            scope.launch { snackbarHostState.showSnackbar(msg) }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -917,16 +886,31 @@ private fun HomeScreenDashboard(
     lastUpdatedFormatted: String = "",
     onRefresh: () -> Unit = {},
     onRenew: () -> Unit,
-    onNavigateToSubscription: (() -> Unit)? = null
+    onNavigateToSubscription: (() -> Unit)? = null,
+    onShowMessage: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val isDark = isAppInDarkTheme()
 
-    // 1. Top Plan Header Card with circular gauge & real-time sync status
+    // 0. iPhone 17 Pro Max Interactive Dynamic Island
+    IPhone17DynamicIsland(
+        isOnline = isOnline,
+        remainingDays = remainingDays,
+        profileName = service?.profileName ?: "2-Nitro",
+        ipAddress = user?.staticIp ?: user?.address ?: "",
+        onRefresh = onRefresh
+    )
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    // 1. Top Plan Header Card with client name, expiration date, price, circular gauge & real-time sync status
     MiniPlanHeaderCard(
         planName = service?.profileName ?: "2-Nitro",
+        clientName = user?.name ?: user?.username ?: "ياسين طه",
         username = user?.username ?: "ha@haq3",
         expirationDate = service?.expiration,
+        price = service?.price ?: 45000.0,
         isActive = isSubscriptionActive,
         remainingDays = remainingDays,
         isOnline = isOnline,
@@ -934,6 +918,32 @@ private fun HomeScreenDashboard(
         lastUpdatedFormatted = lastUpdatedFormatted,
         onRefresh = onRefresh,
         onClick = onNavigateToSubscription
+    )
+
+    Spacer(modifier = Modifier.height(14.dp))
+
+    // iPhone 17 Pro Max Control Center Action Grid
+    IPhoneControlCenterGrid(
+        onNavigateToSubscription = { onNavigateToSubscription?.invoke() },
+        onOpenRenewDialog = onRenew,
+        onOpenSupport = {
+            try {
+                val msg = "مرحباً الدعم الفني لخدمة Skyline Internet.\nاسم المستخدم: ${user?.username ?: ""}"
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("https://wa.me/${DEVELOPER_WHATSAPP_NUMBER.replace("+", "")}?text=${Uri.encode(msg)}")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+            } catch (_: Exception) {}
+        },
+        onCallAgent = {
+            try {
+                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$AGENT_RESELLER_PHONE_NUMBER")).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+            } catch (_: Exception) {}
+        }
     )
 
     // Alert Banner if Subscription is Expired or Expiring in <= 3 days
@@ -1089,37 +1099,37 @@ private fun HomeScreenDashboard(
 
     Spacer(modifier = Modifier.height(14.dp))
 
-    // 2. Account & Subscription Information Card
-    Card(
+    // 2. Comprehensive Account & Balance Overview Liquid Glass Widget
+    LiquidGlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("account_subscription_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(26.dp),
+        isDark = isDark,
+        elevation = 6.dp
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "معلومات الحساب والاشتراك",
+                    text = "تفاصيل المشترك والحساب",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isServiceOnline) SkylineOnline.copy(alpha = 0.12f) else Color.Gray.copy(alpha = 0.12f)
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isServiceOnline) SkylineOnline.copy(alpha = 0.14f) else Color.Gray.copy(alpha = 0.14f)
                 ) {
                     Text(
                         text = if (isServiceOnline) "متصل • ONLINE" else "غير متصل • OFFLINE",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isServiceOnline) SkylineOnline else Color.Gray,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
                 }
             }
@@ -1129,10 +1139,26 @@ private fun HomeScreenDashboard(
             InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
             InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
             InfoRow(
-                label = stringResource(R.string.expiration_date),
-                value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
+                label = "اسم الباقة / العمل",
+                value = service?.profileName ?: "2-Nitro",
                 valueColor = SkylineBlue
             )
+            InfoRow(
+                label = "الأيام المتبقية",
+                value = if (remainingDays <= 0) "منتهي" else "$remainingDays يوم متبقي",
+                valueColor = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+            )
+            InfoRow(
+                label = stringResource(R.string.expiration_date),
+                value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
+                valueColor = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+            )
+            if (!user?.registeredOn.isNullOrBlank()) {
+                InfoRow(
+                    label = stringResource(R.string.start_date),
+                    value = user?.registeredOn ?: ""
+                )
+            }
             val currentBalance = user?.balance ?: dashboard?.balance ?: 0.0
             InfoRow(
                 label = "الرصيد المتوفر",
@@ -1143,19 +1169,15 @@ private fun HomeScreenDashboard(
                 label = stringResource(R.string.price),
                 value = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}"
             )
-            InfoRow(
-                label = stringResource(R.string.auto_renew),
-                value = if (user?.autoRenew == 1) "مفعل" else "معطل"
-            )
 
             if (onNavigateToSubscription != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .clickable { onNavigateToSubscription() }
                         .padding(vertical = 6.dp, horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1170,7 +1192,7 @@ private fun HomeScreenDashboard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "عرض العداد التنازلي وتفاصيل الرصيد",
+                            text = "عرض العداد التنازلي وتفاصيل الشبكة الكاملة",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = SkylineBlue
@@ -1189,97 +1211,89 @@ private fun HomeScreenDashboard(
 
     Spacer(modifier = Modifier.height(14.dp))
 
-    // 3. Service & Network Details Card
-    Card(
+    // 3. Network & Connection Specs Card (بيانات الاتصال والشبكة والخادم)
+    LiquidGlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("service_network_card"),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .testTag("network_specs_card"),
+        shape = RoundedCornerShape(26.dp),
+        isDark = isDark,
+        elevation = 6.dp
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "بيانات الاتصال والشبكة",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Dns,
+                    contentDescription = null,
+                    tint = SkylineCyan,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "بيانات الشبكة والخادم",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            InfoRow(label = stringResource(R.string.service_speed), value = service?.downloadLimit ?: "غير محدد")
-            InfoRow(label = stringResource(R.string.static_ip), value = user?.staticIp ?: "--")
-            InfoRow(label = stringResource(R.string.contract_id), value = user?.contractId ?: "300285")
-            InfoRow(label = stringResource(R.string.company), value = user?.company ?: "Skyline Internet")
+            InfoRow(
+                label = "حالة الاتصال",
+                value = if (isServiceOnline) "متصل بالخدمة" else "غير متصل",
+                valueColor = if (isServiceOnline) SkylineSuccess else Color.Gray
+            )
+            val speedDisplay = if (!service?.downloadLimit.isNullOrBlank()) {
+                "${service?.downloadLimit} / ${service?.uploadLimit ?: "10M"}"
+            } else {
+                service?.description ?: "30 Mbps / 10 Mbps"
+            }
+            InfoRow(
+                label = "سرعة الخدمة",
+                value = speedDisplay
+            )
+            InfoRow(
+                label = stringResource(R.string.static_ip),
+                value = user?.staticIp ?: "10.20.30.45"
+            )
+            if (!user?.phone.isNullOrBlank()) {
+                InfoRow(
+                    label = stringResource(R.string.phone),
+                    value = user?.phone ?: ""
+                )
+            }
+            if (!user?.address.isNullOrBlank()) {
+                InfoRow(
+                    label = stringResource(R.string.address),
+                    value = user?.address ?: ""
+                )
+            }
+            val isAutoRenewActive = user?.autoRenew == 1 || user?.autoRenew == null
+            InfoRow(
+                label = stringResource(R.string.auto_renew),
+                value = if (isAutoRenewActive) "مفعل تلقائياً" else "غير مفعل",
+                valueColor = if (isAutoRenewActive) SkylineSuccess else Color.Gray
+            )
         }
     }
 
-    Spacer(modifier = Modifier.height(18.dp))
-
-    // 4. Quick Actions
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Button(
-            onClick = {
-                HapticFeedbackHelper.performClick(context, haptic)
-                onRenew()
-            },
-            modifier = Modifier
-                .weight(1f)
-                .height(50.dp)
-                .testTag("btn_renew_home"),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SkylineBlue)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Autorenew,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.renew_service),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        OutlinedButton(
-            onClick = {
-                HapticFeedbackHelper.performClick(context, haptic)
-                onRefresh()
-            },
-            modifier = Modifier
-                .height(50.dp)
-                .testTag("btn_refresh_home"),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = SkylineBlue),
-            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = stringResource(R.string.refresh),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("تحديث", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(14.dp))
+    Spacer(modifier = Modifier.height(28.dp))
 }
 
 /**
- * Mini header card present at the top of Screen 4 and Screen 5
+ * Mini header card present at the top of Screen 4 and Screen 5 (Apple Liquid Glass Hero Widget)
  */
 @Composable
 private fun MiniPlanHeaderCard(
     planName: String,
+    clientName: String? = null,
     username: String? = null,
     expirationDate: String? = null,
+    price: Double? = null,
     isActive: Boolean,
     remainingDays: Int,
     isOnline: Boolean = true,
@@ -1288,18 +1302,17 @@ private fun MiniPlanHeaderCard(
     onRefresh: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
-    Card(
+    val isDark = isAppInDarkTheme()
+    LiquidGlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("mini_plan_card")
-            .then(
-                if (onClick != null) Modifier.clickable { onClick() } else Modifier
-            ),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
+            .testTag("mini_plan_card"),
+        shape = RoundedCornerShape(26.dp),
+        isDark = isDark,
+        elevation = 7.dp,
+        onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             CardOnlineStatusIndicator(
                 isOnline = isOnline,
                 isRefreshing = isRefreshing,
@@ -1307,7 +1320,7 @@ private fun MiniPlanHeaderCard(
                 onRefresh = onRefresh
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1326,14 +1339,42 @@ private fun MiniPlanHeaderCard(
                         StatusBadge(isActive = isActive)
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    if (!clientName.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(5.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "اسم العميل: $clientName",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
 
-                    Text(
-                        text = "اسم المستخدم: ${username ?: "ha@haq3"}",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SkylineBlue
-                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = null,
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "اسم المستخدم: ${username ?: "ha@haq3"}",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SkylineBlue
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -1352,6 +1393,25 @@ private fun MiniPlanHeaderCard(
                             color = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
                         )
                     }
+
+                    if (price != null && price > 0) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CreditCard,
+                                contentDescription = null,
+                                tint = SkylineSuccess,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "سعر الاشتراك: IQD ${String.format(Locale.US, "%,.0f", price)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SkylineSuccess
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -1359,7 +1419,7 @@ private fun MiniPlanHeaderCard(
                 CircularDaysGauge(
                     days = remainingDays,
                     percentage = if (remainingDays <= 0) 0f else (remainingDays / 30f).coerceIn(0.05f, 1f),
-                    size = 76.dp
+                    size = 78.dp
                 )
             }
         }
@@ -1523,6 +1583,90 @@ private fun NotificationsTabScreen(
                                     color = if (isExpired) Color(0xFFDC2626) else Color(0xFFB45309)
                                 )
                             }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 3-Day Notification System Status Card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = SkylineBlue.copy(alpha = 0.08f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue.copy(alpha = 0.25f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    tint = SkylineBlue,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "نظام التنبيه التلقائي (قبل 3 أيام)",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SkylineBlue
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = SkylineSuccess.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "مفعل ومجدول",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SkylineSuccess,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "يقوم النظام المحلي بجدولة إشعار تذكيري يظهر على الهاتف قبل انتهاء الاشتراك بـ 3 أيام، مع فحص دوري بالخلفية لضمان استمرارية الخدمة.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 16.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                HapticFeedbackHelper.performClick(context, haptic)
+                                NotificationScheduler.triggerTestNotification(
+                                    context = context,
+                                    alertType = com.example.worker.ExpirationNotificationWorker.ALERT_3D,
+                                    expirationDateStr = expirationDateStr
+                                )
+                                onShowMessage("تم إرسال إشعار (متبقي 3 أيام) إلى شريط الإشعارات!")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp)
+                                .testTag("btn_test_3d_notification"),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = SkylineBlue),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("تجربة إشعار متبقي 3 أيام الآن", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

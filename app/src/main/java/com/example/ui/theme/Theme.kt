@@ -45,7 +45,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = ThemeController.isDarkModeOverride ?: isSystemInDarkTheme(),
+    darkTheme: Boolean = ThemeController.isDarkModeOverride ?: false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

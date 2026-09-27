@@ -42,8 +42,6 @@
     <string name="service_speed">السرعة</string>
     <string name="service_description">وصف الخدمة</string>
     <string name="client">العميل</string>
-    <string name="server_url_label">رابط الخادم</string>
-    <string name="server_url_value">admin.skylineiq.com/user</string>
     <string name="refresh">تحديث البيانات</string>
     <string name="operations">العمليات</string>
     <string name="redeem_code">شحن الرصيد (كارت)</string>

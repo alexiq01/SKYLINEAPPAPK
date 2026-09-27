@@ -16,6 +16,7 @@ data class LoginUiState(
     val password: String = "",
     val isPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
+    val loadingMessage: String = "جاري التحقق...",
     val hasSavedCredentials: Boolean = false,
     val showDialog: Boolean = false,
     val dialogTitle: String = "",
@@ -109,13 +110,27 @@ class LoginViewModel(
         }
     }
 
-    fun autoLoginNetwork() {
-        _uiState.value = _uiState.value.copy(isLoading = true, showDialog = false)
+    fun loginWithGps(latitude: Double? = null, longitude: Double? = null) {
+        val coordMsg = if (latitude != null && longitude != null) {
+            "جاري تحديد الموقع والاتصال بالسيرفر..."
+        } else {
+            "جاري تسجيل الدخول التلقائي..."
+        }
+
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            loadingMessage = coordMsg,
+            showDialog = false
+        )
 
         viewModelScope.launch {
-            // Perform background connection check to provider gateway at admin.skylineiq.com/user
-            val result = repository.checkProviderConnectionAndAutoLogin()
+            val result = repository.autoLoginWithGps(latitude, longitude)
             result.onSuccess {
+                // Fetch fresh subscription details into session / cache
+                try {
+                    repository.fetchSubscriptionData()
+                } catch (_: Exception) {}
+
                 _uiState.value = _uiState.value.copy(isLoading = false, showDialog = false)
                 _events.emit(LoginEvent.LoginSuccess)
             }.onFailure { error ->
@@ -124,19 +139,23 @@ class LoginViewModel(
                     errorMsg.contains("provider_status", ignoreCase = true) ||
                     error is java.net.UnknownHostException || error is java.net.SocketTimeoutException
                 ) {
-                    "أنت غير متصل بمزود خدمة سكايلان حالياً (admin.skylineiq.com/user).\n\nيرجى الاتصال بشبكة واي فاي المزود للدخول التلقائي المباشر، أو قم بإدخال بيانات اشتراكك (اسم المستخدم وكلمة المرور) يدوياً."
+                    "أنت غير متصل بمزود الخدمة حالياً.\n\nيرجى التأكد من الاتصال بشبكة الإنترنت أو إدخال اسم المستخدم وكلمة المرور للمتابعة."
                 } else {
-                    "تعذر الاتصال بالمزود: ${error.localizedMessage ?: "تأكد من الاتصال بالشبكة والمحاولة مجدداً."}"
+                    "تعذر الاتصال التلقائي: ${error.localizedMessage ?: "تأكد من الاتصال بالشبكة والمحاولة مجدداً."}"
                 }
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     showDialog = true,
-                    dialogTitle = "تنبيه الاتصال بالمزود",
+                    dialogTitle = "تنبيه تسجيل الدخول التلقائي",
                     dialogMessage = message
                 )
             }
         }
+    }
+
+    fun autoLoginNetwork() {
+        loginWithGps(null, null)
     }
 
     fun autoLogin() {

@@ -139,19 +139,13 @@ fun DeveloperSupportCard(
         }
     }
 
-    Card(
+    LiquidGlassCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("developer_support_card"),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
-        )
+        shape = RoundedCornerShape(26.dp),
+        isDark = isDark,
+        elevation = 5.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // Header
@@ -432,17 +426,11 @@ fun DeveloperScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // 1. Developer Profile Hero Card - Modern Card with gradient and badges
-        Card(
+        LiquidGlassCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
-            )
+            shape = RoundedCornerShape(26.dp),
+            isDark = isDark,
+            elevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -509,17 +497,11 @@ fun DeveloperScreen(
         }
 
         // 2. Global Theme Toggle Card (Light / Dark Mode)
-        Card(
+        LiquidGlassCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
-            )
+            shape = RoundedCornerShape(22.dp),
+            isDark = isDark,
+            elevation = 4.dp
         ) {
             Row(
                 modifier = Modifier
@@ -581,17 +563,11 @@ fun DeveloperScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Font Size Configuration
-        Card(
+        LiquidGlassCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
-            )
+            isDark = isDark,
+            elevation = 4.dp
         ) {
             Column(
                 modifier = Modifier
@@ -603,7 +579,7 @@ fun DeveloperScreen(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
-                            .background(if (isDark) Color(0xFF14274E) else Color(0xFFF1F5F9)),
+                            .background(if (isDark) Color(0xFF14274E) else SkylineBlue.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -653,17 +629,11 @@ fun DeveloperScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // 3. Detailed Contact Channels (Instagram & WhatsApp) with Clear Data and Icons
-        Card(
+        LiquidGlassCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (isDark) SkylineBlue.copy(alpha = 0.2f) else Color(0xFFE2E8F0)
-            )
+            isDark = isDark,
+            elevation = 4.dp
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -694,7 +664,7 @@ fun DeveloperScreen(
 
                 // Instagram Row
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(18.dp),
                     color = if (isDark) Color(0xFF132240) else Color(0xFFF8FAFC),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
@@ -710,16 +680,11 @@ fun DeveloperScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.linearGradient(
-                                            listOf(Color(0xFF833AB4), Color(0xFFFD1D1D), Color(0xFFFCB045))
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
+                            LiquidGlassSquircleIcon(
+                                gradient = LiquidGradients.Instagram,
+                                size = 44.dp,
+                                shapeRadius = 14.dp,
+                                glowColor = Color(0xFFE1306C)
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_instagram),
@@ -779,7 +744,7 @@ fun DeveloperScreen(
 
                 // WhatsApp Row
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(18.dp),
                     color = if (isDark) Color(0xFF132240) else Color(0xFFF8FAFC),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
@@ -795,12 +760,11 @@ fun DeveloperScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF25D366)),
-                                contentAlignment = Alignment.Center
+                            LiquidGlassSquircleIcon(
+                                gradient = LiquidGradients.WhatsApp,
+                                size = 44.dp,
+                                shapeRadius = 14.dp,
+                                glowColor = Color(0xFF25D366)
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_whatsapp),
@@ -898,17 +862,11 @@ fun SkylineOfficesCard(onCopied: (String) -> Unit, modifier: Modifier = Modifier
         }
     }
 
-    Card(
+    LiquidGlassCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) Color(0xFF0C1930) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (isDark) SkylineBlue.copy(alpha = 0.25f) else Color(0xFFE2E8F0)
-        )
+        shape = RoundedCornerShape(26.dp),
+        isDark = isDark,
+        elevation = 5.dp
     ) {
         Column(
             modifier = Modifier
