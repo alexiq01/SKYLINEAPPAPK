@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "4397264081",
+    "project_id": "skyline-alstrak",
+    "storage_bucket": "skyline-alstrak.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:4397264081:android:85e891a41b1e350edca9f0",
+        "android_client_info": {
+          "package_name": "ya.yassin.skyline"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdxKmKErtMwMLYvoGbGXCVL7dEUVLfoyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
