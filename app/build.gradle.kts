@@ -17,8 +17,8 @@ android {
     applicationId = "ya.yassin.skyline"
     minSdk = 24
     targetSdk = 36
-    versionCode = 3
-    versionName = "1.0.3"
+    versionCode = 4
+    versionName = "1.0.4"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -38,6 +38,8 @@ android {
         keyAlias = "androiddebugkey"
         keyPassword = "android"
       }
+      enableV1Signing = true
+      enableV2Signing = true
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
