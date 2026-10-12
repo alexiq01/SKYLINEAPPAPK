@@ -28,9 +28,13 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Wifi
@@ -531,24 +535,50 @@ fun SubscriptionDetailsScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                InfoRow(label = "اسم الباقة الحالية", value = service?.profileName ?: "2-Nitro", valueColor = SkylineBlue)
-                InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
-                InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
+                InfoRow(
+                    label = "اسم الباقة الحالية",
+                    value = service?.profileName ?: "2-Nitro",
+                    icon = Icons.Default.CardMembership,
+                    valueColor = SkylineBlue
+                )
+                InfoRow(
+                    label = stringResource(R.string.client),
+                    value = user?.name ?: user?.username ?: "ياسين طه",
+                    icon = Icons.Default.Person
+                )
+                InfoRow(
+                    label = stringResource(R.string.username),
+                    value = user?.username ?: "ha@haq3",
+                    icon = Icons.Default.Badge
+                )
                 InfoRow(
                     label = stringResource(R.string.expiration_date),
                     value = NotificationScheduler.formatExpirationWithRemainingTime(expirationDateStr),
+                    icon = Icons.Default.AccessTime,
                     valueColor = if (isExpired) Color(0xFFDC2626) else SkylineBlue
                 )
                 InfoRow(
                     label = "سعر الاشتراك",
-                    value = "IQD ${String.format(Locale.US, "%,.0f", planPrice)}"
+                    value = "IQD ${String.format(Locale.US, "%,.0f", planPrice)}",
+                    icon = Icons.Default.CreditCard,
+                    valueColor = SkylineSuccess
                 )
                 InfoRow(
                     label = "التجديد التلقائي",
-                    value = if (user?.autoRenew == 1) "مفعل تلقائياً" else "معطل"
+                    value = if (user?.autoRenew == 1) "مفعل تلقائياً" else "معطل",
+                    icon = Icons.Default.Autorenew,
+                    valueColor = if (user?.autoRenew == 1) SkylineSuccess else Color.Gray
                 )
-                InfoRow(label = "رقم العقد", value = user?.contractId ?: "300285")
-                InfoRow(label = "الشركة المزودة", value = user?.company ?: "Skyline Internet")
+                InfoRow(
+                    label = "رقم العقد",
+                    value = user?.contractId ?: "300285",
+                    icon = Icons.Default.Info
+                )
+                InfoRow(
+                    label = "الشركة المزودة",
+                    value = user?.company ?: "Skyline Internet",
+                    icon = Icons.Default.Wifi
+                )
             }
         }
 

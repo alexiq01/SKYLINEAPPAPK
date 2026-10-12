@@ -1114,83 +1114,156 @@ private fun HomeScreenDashboard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "تفاصيل المشترك والحساب",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(SkylineBlue.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            tint = SkylineBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "تفاصيل المشترك والحساب",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color = if (isServiceOnline) SkylineOnline.copy(alpha = 0.14f) else Color.Gray.copy(alpha = 0.14f)
                 ) {
-                    Text(
-                        text = if (isServiceOnline) "متصل • ONLINE" else "غير متصل • OFFLINE",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isServiceOnline) SkylineOnline else Color.Gray,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(if (isServiceOnline) SkylineOnline else Color.Gray)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isServiceOnline) "متصل • ONLINE" else "غير متصل",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isServiceOnline) SkylineOnline else Color.Gray
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            InfoRow(label = stringResource(R.string.client), value = user?.name ?: user?.username ?: "ياسين طه")
-            InfoRow(label = stringResource(R.string.username), value = user?.username ?: "ha@haq3")
+            // 2x2 Modern KPI Stats Grid
+            val currentBalance = user?.balance ?: dashboard?.balance ?: 0.0
+            val planPrice = service?.price ?: 45000.0
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ModernKpiCard(
+                    title = "الباقة الحالية",
+                    value = service?.profileName ?: "2-Nitro",
+                    icon = Icons.Default.CardMembership,
+                    iconTint = SkylineBlue,
+                    valueColor = SkylineBlue,
+                    modifier = Modifier.weight(1f)
+                )
+                ModernKpiCard(
+                    title = "الأيام المتبقية",
+                    value = if (remainingDays <= 0) "منتهي" else "$remainingDays يوم",
+                    icon = Icons.Default.AccessTime,
+                    iconTint = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineOnline,
+                    valueColor = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineOnline,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                ModernKpiCard(
+                    title = "سعر الاشتراك",
+                    value = "IQD ${String.format(Locale.US, "%,.0f", planPrice)}",
+                    icon = Icons.Default.CreditCard,
+                    iconTint = SkylineSuccess,
+                    valueColor = SkylineSuccess,
+                    modifier = Modifier.weight(1f)
+                )
+                ModernKpiCard(
+                    title = "الرصيد المتوفر",
+                    value = "IQD ${String.format(Locale.US, "%,.2f", currentBalance)}",
+                    icon = Icons.Default.Badge,
+                    iconTint = SkylineCyan,
+                    valueColor = if (currentBalance > 0) SkylineSuccess else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(10.dp))
+
             InfoRow(
-                label = "اسم الباقة / العمل",
-                value = service?.profileName ?: "2-Nitro",
-                valueColor = SkylineBlue
+                label = stringResource(R.string.client),
+                value = user?.name ?: user?.username ?: "ياسين طه",
+                icon = Icons.Default.Person
             )
             InfoRow(
-                label = "الأيام المتبقية",
-                value = if (remainingDays <= 0) "منتهي" else "$remainingDays يوم متبقي",
-                valueColor = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+                label = stringResource(R.string.username),
+                value = user?.username ?: "ha@haq3",
+                icon = Icons.Default.Badge
             )
             InfoRow(
                 label = stringResource(R.string.expiration_date),
                 value = NotificationScheduler.formatExpirationWithRemainingTime(service?.expiration),
+                icon = Icons.Default.AccessTime,
                 valueColor = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
-            )
-            if (!user?.registeredOn.isNullOrBlank()) {
-                InfoRow(
-                    label = stringResource(R.string.start_date),
-                    value = user?.registeredOn ?: ""
-                )
-            }
-            val currentBalance = user?.balance ?: dashboard?.balance ?: 0.0
-            InfoRow(
-                label = "الرصيد المتوفر",
-                value = "IQD ${String.format(Locale.US, "%,.2f", currentBalance)}",
-                valueColor = if (currentBalance > 0) SkylineSuccess else MaterialTheme.colorScheme.onSurface
-            )
-            InfoRow(
-                label = stringResource(R.string.price),
-                value = "IQD ${String.format(Locale.US, "%,.0f", service?.price ?: 45000.0)}"
             )
 
             if (onNavigateToSubscription != null) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable { onNavigateToSubscription() }
-                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                        .padding(vertical = 8.dp, horizontal = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CardMembership,
-                            contentDescription = null,
-                            tint = SkylineBlue,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(SkylineBlue.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CardMembership,
+                                contentDescription = null,
+                                tint = SkylineBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "عرض العداد التنازلي وتفاصيل الشبكة الكاملة",
                             fontSize = 13.sp,
@@ -1223,52 +1296,141 @@ private fun HomeScreenDashboard(
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Default.Dns,
-                    contentDescription = null,
-                    tint = SkylineCyan,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "بيانات الشبكة والخادم",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(SkylineCyan.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Dns,
+                            contentDescription = null,
+                            tint = SkylineCyan,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "بيانات الشبكة والخادم",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isServiceOnline) SkylineOnline.copy(alpha = 0.14f) else Color.Gray.copy(alpha = 0.14f)
+                ) {
+                    Text(
+                        text = if (isServiceOnline) "نشط ومتاح" else "غير متصل",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isServiceOnline) SkylineOnline else Color.Gray,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
             InfoRow(
-                label = "حالة الاتصال",
-                value = if (isServiceOnline) "متصل بالخدمة" else "غير متصل",
+                label = "حالة الاتصال بالخدمة",
+                value = if (isServiceOnline) "متصل بالخدمة • ONLINE" else "غير متصل بالشبكة",
+                icon = Icons.Default.CheckCircle,
                 valueColor = if (isServiceOnline) SkylineSuccess else Color.Gray
             )
             if (!user?.phone.isNullOrBlank()) {
                 InfoRow(
                     label = stringResource(R.string.phone),
-                    value = user?.phone ?: ""
+                    value = user?.phone ?: "",
+                    icon = Icons.Default.Phone
                 )
             }
             if (!user?.address.isNullOrBlank()) {
                 InfoRow(
                     label = stringResource(R.string.address),
-                    value = user?.address ?: ""
+                    value = user?.address ?: "",
+                    icon = Icons.Default.Home
                 )
             }
             val isAutoRenewActive = user?.autoRenew == 1 || user?.autoRenew == null
             InfoRow(
                 label = stringResource(R.string.auto_renew),
                 value = if (isAutoRenewActive) "مفعل تلقائياً" else "غير مفعل",
+                icon = Icons.Default.Autorenew,
                 valueColor = if (isAutoRenewActive) SkylineSuccess else Color.Gray
             )
         }
     }
 
     Spacer(modifier = Modifier.height(28.dp))
+}
+
+/**
+ * Modern KPI metric card for fast glanceable dashboard insights
+ */
+@Composable
+private fun ModernKpiCard(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    modifier: Modifier = Modifier
+) {
+    val isDark = isAppInDarkTheme()
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = if (isDark) Color(0x2E1E293B) else Color(0x66F1F5F9),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDark) Color(0x3338BDF8) else Color(0x40CBD5E1)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(iconTint.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Text(
+                    text = title,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor,
+                maxLines = 1
+            )
+        }
+    }
 }
 
 /**
@@ -1315,88 +1477,128 @@ private fun MiniPlanHeaderCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    // Subscriber Name & Monogram Avatar
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = planName,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        StatusBadge(isActive = isActive)
-                    }
-
-                    if (!clientName.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(5.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(SkylineBlue, SkylineCyan)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
-                                text = "اسم العميل: $clientName",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
+                                text = (clientName?.take(1) ?: "ي"),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = clientName ?: "ياسين طه",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "المشترك • @${username ?: "ha@haq3"}",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Badge,
-                            contentDescription = null,
-                            tint = SkylineBlue,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "اسم المستخدم: ${username ?: "ha@haq3"}",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = SkylineBlue
-                        )
+                    // Plan Pill Tag & Status Badge
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = SkylineBlue.copy(alpha = 0.12f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SkylineBlue.copy(alpha = 0.25f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(SkylineBlue)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "باقة $planName",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SkylineBlue
+                                )
+                            }
+                        }
+                        StatusBadge(isActive = isActive)
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = null,
-                            tint = if (remainingDays <= 0) Color(0xFFDC2626) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = NotificationScheduler.formatExpirationWithRemainingTime(expirationDate),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
-                        )
+                    // Expiration Capsule
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (remainingDays <= 0) Color(0x22EF4444) else (if (isDark) Color(0x331E293B) else Color(0x80F1F5F9))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                tint = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = NotificationScheduler.formatExpirationWithRemainingTime(expirationDate),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (remainingDays <= 0) Color(0xFFDC2626) else SkylineBlue
+                            )
+                        }
                     }
 
                     if (price != null && price > 0) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CreditCard,
-                                contentDescription = null,
-                                tint = SkylineSuccess,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "سعر الاشتراك: IQD ${String.format(Locale.US, "%,.0f", price)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SkylineSuccess
-                            )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = SkylineSuccess.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CreditCard,
+                                    contentDescription = null,
+                                    tint = SkylineSuccess,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "سعر الاشتراك: IQD ${String.format(Locale.US, "%,.0f", price)}",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SkylineSuccess
+                                )
+                            }
                         }
                     }
                 }
@@ -1406,7 +1608,7 @@ private fun MiniPlanHeaderCard(
                 CircularDaysGauge(
                     days = remainingDays,
                     percentage = if (remainingDays <= 0) 0f else (remainingDays / 30f).coerceIn(0.05f, 1f),
-                    size = 78.dp
+                    size = 84.dp
                 )
             }
         }
